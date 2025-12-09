@@ -1,11 +1,9 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-
+using MyCOLLDB.Data;
 using MyCOLLGL.Components;
 using MyCOLLGL.Components.Account;
-
-using MyCOLLDB.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
