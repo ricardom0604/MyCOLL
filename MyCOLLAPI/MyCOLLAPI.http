@@ -1,6 +1,0 @@
-@MyCOLLAPI_HostAddress = http://localhost:5074
-
-GET {{MyCOLLAPI_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
