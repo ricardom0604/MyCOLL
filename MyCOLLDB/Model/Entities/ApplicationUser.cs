@@ -1,8 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
-using MyCOLLDB.Entities;
 
-namespace MyCOLLDB.Data;
+namespace MyCOLLDB.Model.Entities;
 
 public enum StateAccount
 {

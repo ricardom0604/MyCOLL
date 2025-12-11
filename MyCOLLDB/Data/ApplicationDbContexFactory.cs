@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
-using MyCOLLDB.Data;
+using Microsoft.Extensions.Configuration;
 
 namespace MyCOLLDB.Data;
 
@@ -8,11 +8,14 @@ public class ApplicationDbContextFactory : IDesignTimeDbContextFactory<Applicati
 {
 	public ApplicationDbContext CreateDbContext(string[] args)
 	{
+		var configuration = new ConfigurationBuilder()
+			.SetBasePath(Directory.GetCurrentDirectory())
+			.AddJsonFile("appsettings.json", optional: false)
+			.Build();
+
+		var connectionString = configuration.GetConnectionString("DefaultConnection");
+
 		var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
-
-		// Use the same connection string from appsettings.json
-		var connectionString = "Server=127.0.0.1,1433;Database=mydb;User Id=SA;Password=YourPassword123!;Encrypt=False;TrustServerCertificate=True;MultipleActiveResultSets=True";
-
 		optionsBuilder.UseSqlServer(connectionString, b => b.MigrationsAssembly("MyCOLLDB"));
 
 		return new ApplicationDbContext(optionsBuilder.Options);

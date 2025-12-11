@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace MyCOLLDB.Entities.Dto;
+namespace MyCOLLDB.Model.Dto;
 
 public class LoginDto
 {

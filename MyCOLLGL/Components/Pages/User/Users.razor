@@ -1,0 +1,118 @@
+@page "/users"
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using MyCOLLDB.Model.Entities
+@using MyCOLLDB.Model.Constants
+
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager NavManager
+
+@attribute [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Employee)]
+
+<PageTitle>Lista de utilizadores</PageTitle>
+
+<h3>Gestão de utilizadores</h3>
+
+@if (_users == null)
+{
+	<p><em>A carregar...</em></p>
+}
+else
+{
+	<table class="table table-hover">
+		<thead>
+			<tr>
+				<th>Email / Username</th>
+				<th>Nome Completo</th>
+				<th>Tipo (Role)</th>
+				<th>Estado</th>
+				<th>Ações</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var user in _users)
+			{
+				<tr>
+					<td>@user.Email</td>
+					<td>@user.FullName</td>
+					<td>
+						@* Mostra a role do utilizador (uma string separada por vírgulas se tiver várias) *@
+						@(_userRolesMap.ContainsKey(user.Id) ? string.Join(", ", _userRolesMap[user.Id]) : "Carregando...")
+					</td>
+					<td>
+						@if (user.StateAccount == StateAccount.Active)
+						{
+							<span class="badge bg-success">Ativo</span>
+						}
+						else
+						{
+							<span class="badge bg-warning text-dark">Pendente</span>
+						}
+					</td>
+					<td>
+						@* Botão de Ativar/Desativar - Requisito  *@
+						@if (user.StateAccount == StateAccount.Active)
+						{
+							<button class="btn btn-sm btn-warning" @onclick="() => ToggleUserStatus(user)">Suspender</button>
+						}
+						else
+						{
+							<button class="btn btn-sm btn-success" @onclick="() => ToggleUserStatus(user)">Ativar</button>
+						}
+
+						@* Botão para promover a Funcionário (Apenas Admin vê)  *@
+						<AuthorizeView Roles="@UserRoles.Admin" Context="authContext">
+							<button class="btn btn-sm btn-info ms-2" @onclick="() => ManageRoles(user)">Gerir Roles</button>
+						</AuthorizeView>
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+}
+
+@code {
+	private List<ApplicationUser>? _users;
+	private Dictionary<string, IList<string>> _userRolesMap = new();
+
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadUsers();
+	}
+
+	private async Task LoadUsers()
+	{
+		_users = await UserManager.Users.ToListAsync();
+
+		foreach (var user in _users)
+		{
+			var roles = await UserManager.GetRolesAsync(user);
+			_userRolesMap[user.Id] = roles;
+		}
+	}
+
+	private async Task ToggleUserStatus(ApplicationUser user)
+	{
+		// Inverte o estado
+		var previousState = user.StateAccount;
+		user.StateAccount = previousState == StateAccount.Suspended
+		? StateAccount.Active : StateAccount.Suspended;
+
+		var result = await UserManager.UpdateAsync(user);
+
+		if (!result.Succeeded)
+		{
+			// Aqui poderia adicionar um toast/alerta de erro
+			Console.WriteLine("Erro ao atualizar estado");
+			// Reverte visualmente em caso de erro
+			user.StateAccount = previousState;
+		}
+	}
+
+	private void ManageRoles(ApplicationUser user)
+	{
+		NavManager.NavigateTo($"/users/roles/{user.Id}");
+	}
+}

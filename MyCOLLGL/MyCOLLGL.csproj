@@ -4,7 +4,7 @@
 		<TargetFramework>net8.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
-		<UserSecretsId>aspnet-MyCOLLAPI-2398e025-851d-49af-b4ee-1364ca59f938</UserSecretsId>
+		<UserSecretsId>aspnet-MyCOLLGL-2398e025-851d-49af-b4ee-1364ca59f938</UserSecretsId>
 	</PropertyGroup>
 
 	<ItemGroup>

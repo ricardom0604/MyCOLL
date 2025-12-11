@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 
-using MyCOLLDB.Data;
+using MyCOLLDB.Model.Entities;
 
 namespace MyCOLLGL.Components.Account;
 

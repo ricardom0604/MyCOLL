@@ -1,4 +1,4 @@
-namespace MyCOLLDB.Entities.Dto;
+namespace MyCOLLDB.Model.Dto;
 
 public class AuthResponseDto
 {

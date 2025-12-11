@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace MyCOLLDB.Entities;
+namespace MyCOLLDB.Model.Entities;
 
 public class Category
 {
