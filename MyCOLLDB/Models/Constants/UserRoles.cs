@@ -1,4 +1,4 @@
-namespace MyCOLLDB.Model.Constants;
+namespace MyCOLLDB.Models.Constants;
 
 public class UserRoles
 {

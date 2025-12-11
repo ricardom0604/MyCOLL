@@ -1,9 +1,9 @@
 @page "/users/roles/{UserId}"
 
 @using Microsoft.AspNetCore.Identity
-@using MyCOLLDB.Model.Constants
+@using MyCOLLDB.Models.Constants
 @using Microsoft.AspNetCore.Authorization
-@using MyCOLLDB.Model.Entities
+@using MyCOLLDB.Data
 
 @attribute [Authorize(Roles = UserRoles.Admin)]
 

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace MyCOLLDB.Model.Entities;
+namespace MyCOLLDB.Models.Entities;
 
 public class ProductImage
 {

@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 
-using MyCOLLDB.Model.Entities;
+using MyCOLLDB.Data;
 
 namespace MyCOLLGL.Components.Account;
 

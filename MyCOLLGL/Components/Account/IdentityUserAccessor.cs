@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 
-using MyCOLLDB.Model.Entities;
+using MyCOLLDB.Data;
 
 namespace MyCOLLGL.Components.Account;
 

@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using MyCOLLDB.Data;
 
-namespace MyCOLLDB.Model.Entities;
+namespace MyCOLLDB.Models.Entities;
 
 public enum ProductType
 {

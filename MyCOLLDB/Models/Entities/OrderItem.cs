@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace MyCOLLDB.Model.Entities;
+namespace MyCOLLDB.Models.Entities;
 
 public class OrderItem
 {

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using MyCOLLDB.Model.Entities;
+using MyCOLLDB.Models.Entities;
 
 namespace MyCOLLDB.Data;
 

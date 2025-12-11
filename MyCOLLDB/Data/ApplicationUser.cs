@@ -1,7 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
+using MyCOLLDB.Models.Entities;
 
-namespace MyCOLLDB.Model.Entities;
+namespace MyCOLLDB.Data;
 
 public enum StateAccount
 {
@@ -12,7 +13,7 @@ public enum StateAccount
 
 public class ApplicationUser : IdentityUser
 {
-	[StringLength(50)]
+	[Required, StringLength(50)]
 	public string FullName { get; set; } = string.Empty;
 
 	[StringLength(9)]
@@ -21,6 +22,7 @@ public class ApplicationUser : IdentityUser
 	[StringLength(100)]
 	public string? Address { get; set; }
 
+	[Required]
 	public StateAccount StateAccount { get; set; } = StateAccount.Pending;
 
 	public ICollection<Order>? Orders { get; set; }

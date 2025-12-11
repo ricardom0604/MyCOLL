@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-
 using MyCOLLDB.Data;
-using MyCOLLDB.Model.Entities;
 using MyCOLLGL.Components;
 using MyCOLLGL.Components.Account;
 
@@ -27,7 +25,7 @@ builder.Services.AddAuthentication(options =>
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-	options.UseSqlServer(connectionString, b => b.MigrationsAssembly("MyCOLL.Data")));
+	options.UseSqlServer(connectionString, b => b.MigrationsAssembly("MyCOLLDB")));
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
