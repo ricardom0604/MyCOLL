@@ -1,0 +1,188 @@
+@page "/orders"
+
+@using Microsoft.EntityFrameworkCore
+@using MyCOLL.Data.Models.Entities
+@using MyCOLL.Data.Data
+@using MyCOLL.Shared.Constants
+
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject IJSRuntime JsRuntime
+@inject NavigationManager NavManager
+@inject ApplicationDbContext DbContext
+
+<PageTitle>Lista de Pedidos</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3>Gestão de Vendas / Pedidos</h3>
+    <button class="btn btn-outline-secondary btn-sm" @onclick="LoadOrders">
+        <i class="bi bi-arrow-clockwise"></i> Atualizar
+    </button>
+</div>
+
+<div class="card p-3 mb-4 bg-light">
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label small text-muted">Pesquisar (Cliente ou ID)</label>
+            <input type="text" class="form-control" @bind="_searchText" @bind:event="oninput" 
+                   placeholder="Nome, Email ou ID..." />
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label small text-muted">Estado</label>
+            <select class="form-select" @bind="_statusFilter">
+                <option value="">Todos os Estados</option>
+                <option value="@OrderStatus.Pending">Pendentes</option>
+                <option value="@OrderStatus.Paid">Pagos</option>
+                <option value="@OrderStatus.Shipped">Enviados</option>
+                <option value="@OrderStatus.Delivered">Entregues</option>
+                <option value="@OrderStatus.Cancelled">Cancelados</option>
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label small text-muted">Ordenar por Data</label>
+            <select class="form-select" @bind="_sortOrder">
+                <option value="desc">Mais Recentes Primeiro</option>
+                <option value="asc">Mais Antigos Primeiro</option>
+            </select>
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end">
+            <button class="btn btn-primary w-100" @onclick="LoadOrders">
+                Filtrar
+            </button>
+        </div>
+    </div>
+</div>
+
+@if(_isLoading)
+{
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p>A carregar encomendas...</p>
+    </div>
+}
+else if (!_ordersList.Any() || _ordersList == null)
+{
+    <div class="alert alert-info text-center">
+        Nenhuma encomenda encontrada com estes filtros.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle shadow-sm bg-white rounded">
+            <thead class="table-light">
+                <tr>
+                    <th>#ID</th>
+                    <th>Data</th>
+                    <th>Cliente</th>
+                    <th>Total</th>
+                    <th>Itens</th>
+                    <th>Estado</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var order in _ordersList)
+                {
+                    <tr>
+                        <td><strong>#@order.Id</strong></td>
+                        <td>
+                            @order.OrderDate.ToShortDateString() <br/>
+                            <small class="text-muted">@order.OrderDate.ToShortTimeString()</small>
+                        </td>
+                        <td>
+                            @if(order.Client != null)
+                            {
+                                <span>@order.Client.FullName</span> <br/>
+                                <small class="text-muted">@order.Client.Email</small>
+                            }
+                            else
+                            {
+                                <span class="text-danger">Desconhecido</span>
+                            }
+                        </td>
+                        <td class="fw-bold">@order.TotalAmount.ToString("C")</td>
+                        <td>
+                            <span class="badge bg-light text-dark border">
+                                @order.Items?.Count() itens
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge @GetStatusBadge(order.Status)">@order.Status</span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" @onclick="() => ManageOrder(order.Id)">
+                                Detalhes
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<Order>? _ordersList;
+    private List<Order>? _orders;
+    private bool _isLoading = false;
+    
+    // Variáveis de Filtro
+    private string _searchText = "";
+    private string _statusFilter = "";
+    private string _sortOrder = "desc"; // Padrão: Mais novo primeiro
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrders();
+    }
+    
+    private async Task LoadOrders()
+    {
+        _isLoading = true;
+        await using var context = DbFactory.CreateDbContext();
+
+        var query = context.Orders
+            .Include(o => o.Client)
+            .AsQueryable();
+
+        // Aplicar Filtros
+        if (!string.IsNullOrWhiteSpace(_searchText))
+        {
+            query = query.Where(o => o.Client.FullName.Contains(_searchText) ||
+                                     o.Client.Email.Contains(_searchText) ||
+                                     o.Id.ToString().Contains(_searchText));
+        }
+
+        if (!string.IsNullOrWhiteSpace(_statusFilter))
+        {
+            query = query.Where(o => o.Status == _statusFilter);
+        }
+
+        // Aplicar Ordenação
+        query = _sortOrder == "asc" 
+            ? query.OrderBy(o => o.OrderDate) 
+            : query.OrderByDescending(o => o.OrderDate);
+
+        _orders = await query.ToListAsync();
+        _ordersList = _orders;
+        _isLoading = false;
+    }
+    
+    private void ManageOrder(int orderId)
+    {
+        NavManager.NavigateTo($"/orders/manage/{orderId}");
+    }
+    
+    private static string GetStatusBadge(string status) => status switch
+    {
+        OrderStatus.Pending => "bg-warning text-dark",
+        OrderStatus.Paid => "bg-info text-dark",
+        OrderStatus.Shipped => "bg-primary",
+        OrderStatus.Delivered => "bg-success",
+        OrderStatus.Cancelled => "bg-danger",
+        _ => "bg-secondary"
+    };
+}

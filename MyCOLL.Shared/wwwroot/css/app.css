@@ -1,0 +1,39 @@
+﻿:root {
+    --cor-topo: #A93226;       /* Vermelho Escuro (Barra de cima) */
+    --cor-fundo: #FFEBEE;      /* Vermelho Claro/Rosa (Fundo) */
+    --cor-texto: #333;
+    --cor-botao: #E53935;      /* Vermelho (Destaques) */
+}
+
+body {
+    background-color: var(--cor-fundo);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--cor-texto);
+    margin: 0;
+}
+
+.page {
+    flex-direction: column;
+}
+
+.sidebar {
+    display: none; 
+}
+
+.main {
+    margin-left: 0 !important;
+}
+
+/* Estilo dos Cards de Produto */
+.card-produto {
+    border: none;
+    border-radius: 15px;
+    background: white;
+    transition: transform 0.2s;
+    overflow: hidden;
+}
+
+.card-produto:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}

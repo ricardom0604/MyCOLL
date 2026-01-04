@@ -1,0 +1,116 @@
+﻿@using MyCOLL.Shared.Interface 
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavManager
+@using MyCOLL.Shared.Services
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject CartService CartService
+<div class="page">
+    <main>
+        <div style="background-color: #9b111f; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+            
+            <div>
+                <a href="/" style="font-size: 1.5rem; font-weight: bold; color: white; text-decoration: none">MyCollection</a>
+            </div>
+
+            <div class="d-flex gap-3 text-white align-items-center">
+                <AuthorizeView Roles="Fornecedor">
+                    <Authorized>
+                        <a href="/products/list" class="text-white text-decoration-none">
+                            📦 Meus Produtos
+                        </a>
+                        <a href="/products/create" class="text-white text-decoration-none ms-2">
+                            + Adicionar
+                        </a>
+                    </Authorized>
+                </AuthorizeView>
+
+                <AuthorizeView Roles="Cliente">
+                    <Authorized>
+                        <a href="/order/cart" class="text-white text-decoration-none position-relative ms-2">
+                            <span style="font-size: 1.5rem;">🛒</span>
+                            @if (CartService.Items.Any())
+                            {
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border border-light" 
+                                      style="font-size: 0.7rem;">
+                                    @CartService.Items.Sum(i => i.Quantity)
+                                </span>
+                            }
+                        </a>
+                        <a href="/order/history" class="text-white text-decoration-none position-relative ms-2">
+                            <span style="font-size: 1.5rem;">Histórico</span>
+                            @if (CartService.Items.Any())
+                            {
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border border-light" 
+                                      style="font-size: 0.7rem;">
+                                    @CartService.Items.Sum(i => i.Quantity)
+                                </span>
+                            }
+                        </a>
+                    </Authorized>
+                </AuthorizeView>
+
+                <AuthorizeView>
+                    <Authorized>
+                        <div class="dropdown ms-2">
+                            <button class="btn btn-link text-white text-decoration-none dropdown-toggle fw-bold p-0" 
+                                    type="button" 
+                                    @onclick="ToggleMenu">
+                                Olá, @context.User.Identity?.Name
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 @(_collapseMainMenu ? "show" : "")"
+                                style="position: absolute; right: 0; left: auto; margin-top: 10px;">
+                                <li>
+                                    <button class="dropdown-item text-danger" @onclick="Logout">
+                                        Sair
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </Authorized>
+                    <NotAuthorized>
+                        <a href="/auth/login" class="btn btn-outline-light rounded-pill px-3 py-1 fw-bold btn-sm ms-2">
+                            👤 Entrar
+                        </a>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </div>
+        </div>
+
+        <article class="content px-4 py-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+@code {
+    private bool _collapseMainMenu = false;
+
+    // 4. LÓGICA PARA ATUALIZAR SOZINHO
+    protected override void OnInitialized()
+    {
+        // Diz ao Layout: "Quando o carrinho mudar, avisa"
+        CartService.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        // Deixar de ouvir quando sais do site para não dar erro
+        CartService.OnChange -= StateHasChanged;
+    }
+
+    private void ToggleMenu()
+    {
+        _collapseMainMenu = !_collapseMainMenu;
+    }
+
+    private async Task Logout()
+    {
+        _collapseMainMenu = false;
+        if (AuthStateProvider is IAuthService authService)
+        {
+            await authService.Logout();
+            NavManager.NavigateTo("/auth/login");
+        }
+    }
+}

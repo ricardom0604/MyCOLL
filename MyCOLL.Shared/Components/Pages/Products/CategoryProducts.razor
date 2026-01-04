@@ -1,0 +1,145 @@
+﻿@page "/category/{Id:int}"
+@using MyCOLL.Shared.Models.Dto
+@using MyCOLL.Shared.Services
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@inject CartService CartService
+
+<div class="d-flex align-items-center mb-4">
+    <button class="btn btn-outline-secondary me-3 rounded-circle" @onclick="Back">
+        ⬅
+    </button>
+    <div>
+        <h6 class="text-muted m-0">Categoria</h6>
+        <h2 class="fw-bold m-0" style="color: var(--cor-topo, #00c2e0);">@_categoryName</h2>
+    </div>
+</div>
+
+@if (_isLoading)
+{
+    <div class="d-flex justify-content-center p-5">
+        <div class="spinner-border text-info" role="status"></div>
+    </div>
+}
+else if (_productList.Count == 0 || !_productList.Any())
+{
+    <div class="text-center py-5">
+        <h4 class="mt-3">Esta categoria ainda não tem produtos.</h4>
+        <button class="btn btn-primary mt-2" @onclick="Back">Voltar à Loja</button>
+    </div>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
+        @foreach (var p in _productList)
+        {
+            <div class="col">
+                <div class="card h-100 shadow-sm p-3 border-0 rounded-4">
+                    <div class="img-container" style="height: 200px; overflow: hidden; background-color: #f8f9fa;">
+                        @if (p.Images.Any())
+                        {
+                            var imgPath = p.Images.First().ImageUrl;
+                            string fullUrl;
+                            if (imgPath.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                            {
+                                fullUrl = imgPath;
+                            }
+                            else
+                            {
+                                fullUrl = $"{Http.BaseAddress}{imgPath.TrimStart('/')}";
+                            }
+                            <img src="@fullUrl" 
+                                 class="card-img-top h-100 w-100" 
+                                 style="object-fit: contain; padding: 10px;" 
+                                 alt="@p.Name"/>
+                        }
+                        else
+                        {
+                            <div class="d-flex align-items-center justify-content-center h-100 text-muted">
+                                <i class="bi bi-image fs-1"></i>
+                            </div>
+                        }
+                    </div>
+                    
+                    <div class="mt-3 text-center">
+                        <h5 class="fw-bold mb-1 text-truncate">@p.Name</h5>
+                        <h4 class="text-info fw-bold"
+                            style="color: var(--cor-topo, #00bcd4) !important;">
+                            @p.FinalPrice.ToString("0.00") €
+                        </h4>
+                        @if(p.Stock > 0)
+                        {
+                            <AuthorizeView>
+                                <Authorized>
+                                    <button class="btn btn-outline-warning w-100 rounded-pill mt-2 fw-bold"
+                                            style="color: black; border-color: darkred;" 
+                                            @onclick="() => AddItemToCart(p)">
+                                        + Adicionar
+                                    </button>
+                                </Authorized>
+                                <NotAuthorized>
+                                    <a href="/auth/login" class="btn btn-outline-primary">
+                                        Login para Comprar
+                                    </a>
+                                </NotAuthorized>
+                            </AuthorizeView>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger mb-2">Esgotado</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    // ESTE PARÂMETRO CAPTURA O ID QUE VEM NO URL
+    [Parameter]
+    public int Id { get; set; }
+
+    private List<ProductDto> _productList = new();
+    private string _categoryName = "A carregar...";
+    private bool _isLoading = true;
+
+    // Usamos OnParametersSetAsync em vez de OnInitializedAsync para que a página atualize se mudares de categoria 1 para categoria 2 sem sair da página
+    protected override async Task OnParametersSetAsync()
+    {
+        _isLoading = true;
+        try
+        {
+            // 1. Descobrir o nome da Categoria 
+            var allCategories = await Http.GetFromJsonAsync<List<CategoryDto>>("api/Category");
+            var categoriaAtual = allCategories?.FirstOrDefault(c => c.Id == Id);
+            _categoryName = categoriaAtual?.Name ?? "Categoria Desconhecida";
+
+            // 2. Buscar Produtos
+            var allProducts = await Http.GetFromJsonAsync<List<ProductDto>>("api/Product");
+            
+            if (allProducts != null)
+            {
+                // Filtra apenas os produtos que têm o ID desta categoria
+                _productList = allProducts.Where(p => p.CategoryId == Id).ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Erro: " + ex.Message);
+            _categoryName = "Erro ao carregar";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+    private void AddItemToCart(ProductDto produto)
+    {
+        CartService.AddToCart(produto); 
+    }
+    private void Back()
+    {
+        NavManager.NavigateTo("/");
+    }
+}

@@ -1,0 +1,102 @@
+﻿@using MyCOLL.Shared.Constants
+@using MyCOLL.Shared.Interface
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavManager
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">MyCOLL</a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+    <nav class="flex-column">
+        
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Início
+            </NavLink>
+        </div>
+
+        <AuthorizeView>
+            <Authorized>
+                @if (context.User.IsInRole(UserRoles.Supplier))
+                {
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="/products/list">
+                            <span class="bi bi-box-seam-nav-menu" aria-hidden="true"></span> Meus Produtos
+                        </NavLink>
+                    </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="products/create">
+                            <span class="bi bi-plus-circle-nav-menu" aria-hidden="true"></span> Novo Produto
+                        </NavLink>
+                    </div>
+                }
+
+                @if (context.User.IsInRole(UserRoles.Client))
+                {
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="/order/cart">
+                            <span class="bi bi-cart-fill-nav-menu" aria-hidden="true"></span> Carrinho
+                        </NavLink>
+                    </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="/order/history">
+                            <span class="bi bi-clock-history-nav-menu" aria-hidden="true"></span> Histórico
+                        </NavLink>
+                    </div>
+                }
+
+                <div class="nav-item px-3">
+                    <button class="nav-link btn btn-link text-danger" @onclick="Logout">
+                        <span class="bi bi-box-arrow-right-nav-menu" aria-hidden="true"></span> Sair
+                    </button>
+                </div>
+            </Authorized>
+            
+            <NotAuthorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="/auth/login">
+                        <span class="bi bi-person-circle-nav-menu" aria-hidden="true"></span> Entrar
+                    </NavLink>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
+
+    </nav>
+</div>
+
+<style>
+    .nav-link {
+        display: flex;
+        align-items: center;
+    }
+
+    .nav-link .bi {
+        margin-right: 10px;
+    }
+</style>
+
+@code {
+    private bool _collapseNavMenu = true;
+    private string? NavMenuCssClass => _collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        _collapseNavMenu = !_collapseNavMenu;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task Logout()
+    {
+        if (AuthStateProvider is IAuthService authService)
+        {
+            await authService.Logout();
+            NavManager.NavigateTo("/auth/login");
+        }
+    }
+}

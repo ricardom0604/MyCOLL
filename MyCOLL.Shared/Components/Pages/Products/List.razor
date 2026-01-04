@@ -1,0 +1,158 @@
+@page "/products/list"
+@using System.Security.Claims
+@using MyCOLL.Shared.Models.Dto
+@inject HttpClient Http
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavManager
+@inject IJSRuntime JsRuntime
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>📦 Meus Produtos</h3>
+        <a href="/products/create" class="btn btn-success">
+            + Novo Produto
+        </a>
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p>A carregar o seu stock...</p>
+        </div>
+    }
+    else if (_myProducts.Count == 0 || !_myProducts.Any())
+    {
+        <div class="alert alert-info text-center">
+            <h4>Ainda não tem produtos à venda.</h4>
+            <p>Clique em "Novo Produto" para começar a faturar!</p>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var p in _myProducts)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="img-container" style="height: 200px; overflow: hidden; background-color: #f8f9fa;">
+                            @if (p.Images.Any())
+                            {
+                                var imgPath = p.Images.First().ImageUrl;
+                                string fullUrl;
+                                if (imgPath.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    fullUrl = imgPath;
+                                }
+                                else
+                                {
+                                    // Concatena o endereço da API com o caminho da imagem
+                                    // O TrimStart('/') garante que não ficamos com duas barras //
+                                    fullUrl = $"{Http.BaseAddress}{imgPath.TrimStart('/')}";
+                                }
+                                <img src="@fullUrl"
+                                     class="card-img-top h-100 w-100"
+                                     style="object-fit: contain; padding: 10px;"
+                                     alt="@p.Name"/>
+                            }
+                            else
+                            {
+                                <div class="d-flex align-items-center justify-content-center h-100 text-muted">
+                                    <i class="bi bi-image fs-1"></i>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="card-body">
+                            <h5 class="card-title">@p.Name</h5>
+                            <p class="card-text text-truncate">@p.Description</p>
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-primary fs-6">@p.FinalPrice.ToString("C")</span>
+                                <span class="badge bg-secondary">Stock: @p.Stock</span>
+                            </div>
+
+                            <div class="mt-2">
+                                @if (p.IsActive)
+                                { <span class="badge bg-success">Ativo</span> }
+                                else
+                                { <span class="badge bg-danger">Inativo</span> }
+                            </div>
+                        </div>
+                        
+                        <div class="card-footer bg-white border-top-0 d-grid gap-2">
+                            <a href="/products/edit/@p.Id" class="btn btn-outline-primary btn-sm">✏️ Editar</a>
+                            <button class="btn btn-outline-danger btn-sm" @onclick="() => DeleteProduct(p.Id)">
+                                🗑️ Apagar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private ICollection<ProductDto> _myProducts = new List<ProductDto>();
+    private bool _isLoading = true;
+    private string _currentUserId = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // 1. Descobrir quem está logado
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity != null && user.Identity.IsAuthenticated)
+            {
+                _currentUserId = user.FindFirst(c => c.Type == ClaimTypes.NameIdentifier)?.Value ?? "";
+            }
+
+            if (!string.IsNullOrEmpty(_currentUserId))
+            {
+                // Busca apenas os produtos do fornecedor logado
+                var supplierProducts = await Http.GetFromJsonAsync<List<ProductDto>>($"api/Product/sup/{_currentUserId}");
+                if (supplierProducts != null)
+                {
+                    _myProducts = supplierProducts;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao carregar produtos: {ex.Message}");
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task DeleteProduct(int id)
+    {
+        var confirmar = await JsRuntime.InvokeAsync<bool>("confirm", "Tem a certeza que quer apagar este produto?");
+        if (confirmar)
+        {
+            try
+            {
+                var response = await Http.DeleteAsync($"api/Product/{id}");
+                if (response.IsSuccessStatusCode)
+                {
+                    // Remove da lista visualmente para não ter de recarregar a página
+                    var itemRemover = _myProducts.FirstOrDefault(p => p.Id == id);
+                    if (itemRemover != null) _myProducts.Remove(itemRemover);
+                }
+                else
+                {
+                    await JsRuntime.InvokeVoidAsync("alert", "Não foi possível apagar. Tente novamente.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erro: {ex.Message}");
+            }
+        }
+    }
+}
