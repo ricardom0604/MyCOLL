@@ -39,13 +39,6 @@
                         </a>
                         <a href="/order/history" class="text-white text-decoration-none position-relative ms-2">
                             <span style="font-size: 1.5rem;">Histórico</span>
-                            @if (CartService.Items.Any())
-                            {
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border border-light" 
-                                      style="font-size: 0.7rem;">
-                                    @CartService.Items.Sum(i => i.Quantity)
-                                </span>
-                            }
                         </a>
                     </Authorized>
                 </AuthorizeView>
@@ -107,6 +100,7 @@
     private async Task Logout()
     {
         _collapseMainMenu = false;
+        CartService.Items.Clear();
         if (AuthStateProvider is IAuthService authService)
         {
             await authService.Logout();

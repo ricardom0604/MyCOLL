@@ -89,6 +89,7 @@ else
 }
 
 @code {
+	[Parameter]
 	public int Id { get; set; }
 	private Order? _order;
 
@@ -118,7 +119,7 @@ else
 		if (orderToUpdate != null)
 		{
 			orderToUpdate.Status = OrderStatus.Paid;
-			await DbContext.SaveChangesAsync();
+			await context.SaveChangesAsync();
 			await LoadOrder(); // Atualiza UI
 		}
 	}
