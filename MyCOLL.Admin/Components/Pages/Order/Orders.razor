@@ -10,46 +10,46 @@
 @inject NavigationManager NavManager
 @inject ApplicationDbContext DbContext
 
-<PageTitle>Lista de Pedidos</PageTitle>
+<PageTitle>Orders</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3>Gestão de Vendas / Pedidos</h3>
+    <h3>Orders Management</h3>
     <button class="btn btn-outline-secondary btn-sm" @onclick="LoadOrders">
-        <i class="bi bi-arrow-clockwise"></i> Atualizar
+        <i class="bi bi-arrow-clockwise"></i> Refresh
     </button>
 </div>
 
 <div class="card p-3 mb-4 bg-light">
     <div class="row g-3">
         <div class="col-md-4">
-            <label class="form-label small text-muted">Pesquisar (Cliente ou ID)</label>
+            <label class="form-label small text-muted">Search (Client or ID)</label>
             <input type="text" class="form-control" @bind="_searchText" @bind:event="oninput" 
-                   placeholder="Nome, Email ou ID..." />
+                   placeholder="Name, Email or ID..." />
         </div>
 
         <div class="col-md-3">
-            <label class="form-label small text-muted">Estado</label>
+            <label class="form-label small text-muted">Status</label>
             <select class="form-select" @bind="_statusFilter">
-                <option value="">Todos os Estados</option>
-                <option value="@OrderStatus.Pending">Pendentes</option>
-                <option value="@OrderStatus.Paid">Pagos</option>
-                <option value="@OrderStatus.Shipped">Enviados</option>
-                <option value="@OrderStatus.Delivered">Entregues</option>
-                <option value="@OrderStatus.Cancelled">Cancelados</option>
+                <option value="">All Status</option>
+                <option value="@OrderStatus.Pending">Pending</option>
+                <option value="@OrderStatus.Paid">Paid</option>
+                <option value="@OrderStatus.Shipped">Shipped</option>
+                <option value="@OrderStatus.Delivered">Delivered</option>
+                <option value="@OrderStatus.Cancelled">Cancelled</option>
             </select>
         </div>
 
         <div class="col-md-3">
-            <label class="form-label small text-muted">Ordenar por Data</label>
+            <label class="form-label small text-muted">Sort by Date</label>
             <select class="form-select" @bind="_sortOrder">
-                <option value="desc">Mais Recentes Primeiro</option>
-                <option value="asc">Mais Antigos Primeiro</option>
+                <option value="desc">Most Recent First</option>
+                <option value="asc">Oldest First</option>
             </select>
         </div>
 
         <div class="col-md-2 d-flex align-items-end">
             <button class="btn btn-primary w-100" @onclick="LoadOrders">
-                Filtrar
+                Filter
             </button>
         </div>
     </div>
@@ -59,13 +59,13 @@
 {
     <div class="text-center py-5">
         <div class="spinner-border text-primary" role="status"></div>
-        <p>A carregar encomendas...</p>
+        <p>Loading orders...</p>
     </div>
 }
 else if (!_ordersList.Any() || _ordersList == null)
 {
     <div class="alert alert-info text-center">
-        Nenhuma encomenda encontrada com estes filtros.
+        No orders found with these filters.
     </div>
 }
 else
@@ -75,12 +75,12 @@ else
             <thead class="table-light">
                 <tr>
                     <th>#ID</th>
-                    <th>Data</th>
-                    <th>Cliente</th>
+                    <th>Date</th>
+                    <th>Client</th>
                     <th>Total</th>
-                    <th>Itens</th>
-                    <th>Estado</th>
-                    <th>Ações</th>
+                    <th>Items</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -100,13 +100,13 @@ else
                             }
                             else
                             {
-                                <span class="text-danger">Desconhecido</span>
+                                <span class="text-danger">Unknown</span>
                             }
                         </td>
                         <td class="fw-bold">@order.TotalAmount.ToString("C")</td>
                         <td>
                             <span class="badge bg-light text-dark border">
-                                @order.Items?.Count() itens
+                                @order.Items?.Count() items
                             </span>
                         </td>
                         <td>
@@ -114,7 +114,7 @@ else
                         </td>
                         <td>
                             <button class="btn btn-sm btn-outline-primary" @onclick="() => ManageOrder(order.Id)">
-                                Detalhes
+                                Details
                             </button>
                         </td>
                     </tr>

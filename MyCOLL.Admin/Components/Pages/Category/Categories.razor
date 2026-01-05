@@ -8,144 +8,144 @@
 @inject NavigationManager NavManager
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
 
-<PageTitle>Lista de Categorias</PageTitle>
+<PageTitle>Categories</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3>Categorias</h3>
-    <a href="/categories/create" class="btn btn-success">
-        <i class="bi bi-plus-lg"></i> Nova Categoria
-    </a>
+	<h3>Category List</h3>
+	<a href="/categories/create" class="btn btn-success">
+		<i class="bi bi-plus-lg"></i> New Category
+	</a>
 </div>
 
 <div class="input-group mb-4 shadow-sm" style="max-width: 400px;">
-    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-    <input type="text" class="form-control border-start-0" placeholder="Pesquisar categoria..." 
-           @bind="_searchText" @bind:event="oninput" @onkeyup="LoadCategories" />
+	<span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+	<input type="text" class="form-control border-start-0" placeholder=" Search category..." @bind="_searchText"
+		@bind:event="oninput" @onkeyup="LoadCategories" />
 </div>
 
-@if(_categories == null)
+@if (_categories == null)
 {
-    <p><em>Carregando categorias...</em></p>
+	<p><em>Loading categories...</em></p>
 }
 else if (_categories.Count == 0)
 {
-    <p><em>Nenhuma categoria encontrada.</em></p>
+	<p><em>No categories found.</em></p>
 }
 else
 {
-    <table class="table table-hover">
-        <thead>
-            <tr>
-                <th>Nome</th>
-                <th>Categoria Pai</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody>
-        @foreach (var category in _categories)
-        {
-            <tr>
-                <td>
-                    <span class="fw-bold">@category.Name</span>
-                </td>
-                <td>
-                    @if (category.ParentCategory != null)
-                    {
-                        <span class="badge bg-secondary">@category.ParentCategory.Name</span>
-                    }
-                    else
-                    {
-                        <span class="text-muted small">Raiz</span>
-                    }
-                </td>
-                <td>
-                    <a href="/categories/edit/@category.Id" class="btn btn-sm btn-primary">Editar</a>
-                    <button class="btn btn-sm btn-danger" @onclick="() => DeleteCategory(category.Id)">Apagar</button>
-                </td>
-            </tr>
-        }
-        </tbody>
-    </table>
+	<table class="table table-hover">
+		<thead>
+			<tr>
+				<th>Name</th>
+				<th>Parent Category</th>
+				<th>Actions</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var category in _categories)
+			{
+				<tr>
+					<td>
+						<span class="fw-bold">@category.Name</span>
+					</td>
+					<td>
+						@if (category.ParentCategory != null)
+						{
+							<span class="badge bg-secondary">@category.ParentCategory.Name</span>
+						}
+						else
+						{
+							<span class="text-muted small">Root</span>
+						}
+					</td>
+					<td>
+						<a href="/categories/edit/@category.Id" class="btn btn-sm btn-primary">Edit</a>
+						<button class="btn btn-sm btn-danger" @onclick="() => DeleteCategory(category.Id)">Delete</button>
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
 }
 
 @code {
-    private List<Category>? _categories;
-    private string _searchText = string.Empty;
-    
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadCategories();
-    }
-    private async Task LoadCategories()
-    {
-        await using var context = DbFactory.CreateDbContext();
-        
-        var query = context.Categories
-            .Include(c => c.ParentCategory)
-            .AsQueryable();
-        var all = await context.Categories
-            .ToListAsync();
-        
-        if (!string.IsNullOrWhiteSpace(_searchText))
-        {
-            query = query.Where(c => c.Name.Contains(_searchText));
-        }
+	private List<Category>? _categories;
+	private string _searchText = string.Empty;
 
-        // Ordenar: Raiz primeiro, depois alfabético
-        query = query.OrderBy(c => c.ParentCategoryId).ThenBy(c => c.Name);
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadCategories();
+	}
+	private async Task LoadCategories()
+	{
+		await using var context = DbFactory.CreateDbContext();
 
-        _categories = await query.ToListAsync();
-    }
-    
-    private async Task DeleteCategory(int categoryId)
-    {
-        await using var context = DbFactory.CreateDbContext();
-        var hasProducts = await context.Products.AnyAsync(p => p.CategoryId == categoryId);
-        if (hasProducts)
-        {
-            await JsRuntime.InvokeVoidAsync("alert", "Não é possível apagar: Esta categoria contém produtos.");
-            return;
-        }
-        var confirmed = await JsRuntime.InvokeAsync<bool>("confirm", "Tem a certeza que deseja apagar esta categoria?");
-        if (confirmed)
-        {
-            var category = await context.Categories.FindAsync(categoryId);
-            if (category != null)
-            {
-                await DeleteCategoryRecursive(context, categoryId);
-                await context.SaveChangesAsync();
-                await LoadCategories();
-                StateHasChanged();
-            }
-        }
-    }
-    private static async Task DeleteCategoryRecursive(ApplicationDbContext context, int categoryId)
-    {
-        // A. Encontrar todas as subcategorias diretas
-        var children = await context.Categories
-            .Where(c => c.ParentCategoryId == categoryId)
-            .ToListAsync();
+		var query = context.Categories
+		.Include(c => c.ParentCategory)
+		.AsQueryable();
+		var all = await context.Categories
+		.ToListAsync();
 
-        // B. Para cada filha, chamar este mesmo método (Recursão)
-        foreach (var child in children)
-        {
-            // Importante: Verificar se a filha tem produtos antes de tentar apagar
-            var childHasProducts = await context.Products.AnyAsync(p => p.CategoryId == child.Id);
-            if (childHasProducts)
-            {
-                throw new Exception($"A subcategoria '{child.Name}' tem produtos. Remova os produtos primeiro.");
-            }
-        
-            // Mergulha mais fundo na árvore
-            await DeleteCategoryRecursive(context, child.Id);
-        }
+		if (!string.IsNullOrWhiteSpace(_searchText))
+		{
+			query = query.Where(c => c.Name.Contains(_searchText));
+		}
 
-        // C. Depois de apagar os filhos, apaga o pai (o próprio ID)
-        var categoryToDelete = await context.Categories.FindAsync(categoryId);
-        if (categoryToDelete != null)
-        {
-            context.Categories.Remove(categoryToDelete);
-        }
-    }
+		// Ordenar: Raiz primeiro, depois alfabético
+		query = query.OrderBy(c => c.ParentCategoryId).ThenBy(c => c.Name);
+
+		_categories = await query.ToListAsync();
+	}
+
+	private async Task DeleteCategory(int categoryId)
+	{
+		await using var context = DbFactory.CreateDbContext();
+		var hasProducts = await context.Products.AnyAsync(p => p.CategoryId == categoryId);
+		if (hasProducts)
+		{
+			await JsRuntime.InvokeVoidAsync("alert", "Cannot delete: This category contains products.");
+			return;
+		}
+		var confirmed = await JsRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this category?");
+		if (confirmed)
+		{
+			var category = await context.Categories.FindAsync(categoryId);
+			if (category != null)
+			{
+				await DeleteCategoryRecursive(context, categoryId);
+				await context.SaveChangesAsync();
+				await LoadCategories();
+				StateHasChanged();
+			}
+		}
+	}
+	private static async Task DeleteCategoryRecursive(ApplicationDbContext context, int categoryId)
+	{
+		// A. Encontrar todas as subcategorias diretas
+		var children = await context.Categories
+		.Where(c => c.ParentCategoryId == categoryId)
+		.ToListAsync();
+
+		// B. Para cada filha, chamar este mesmo método (Recursão)
+		foreach (var child in children)
+		{
+			// Importante: Verificar se a filha tem produtos antes de tentar apagar
+			var childHasProducts = await context.Products.AnyAsync(p => p.CategoryId == child.Id);
+			if (childHasProducts)
+			{
+				throw new Exception($"The subcategory '{child.Name}' has products. Remove the products first.");
+			}
+
+			// Mergulha mais fundo na árvore
+			await DeleteCategoryRecursive(context, child.Id);
+		}
+
+		// C. Depois de apagar os filhos, apaga o pai (o próprio ID)
+		var categoryToDelete = await context.Categories.FindAsync(categoryId);
+		if (categoryToDelete != null)
+		{
+			context.Categories.Remove(categoryToDelete);
+		}
+	}
 
 }

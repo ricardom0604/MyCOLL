@@ -6,7 +6,7 @@
 @using MyCOLL.Data.Data
 @using MyCOLL.Data.Models.Entities
 @using MyCOLL.Shared.Constants
-@using MyCOLL.Shared.Models.Enums 
+@using MyCOLL.Shared.Models.Enums
 @using Microsoft.AspNetCore.Hosting
 
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
@@ -16,310 +16,320 @@
 
 
 <EditForm Model="Product" OnValidSubmit="HandleSubmit">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+	<DataAnnotationsValidator />
+	<ValidationSummary />
 
-    @* Linha 1: Nome e Categoria *@
-    <div class="row">
-        <div class="col-md-6 mb-3">
-            <label class="form-label">Nome do Produto</label>
-            <InputText class="form-control" @bind-Value="Product.Name" placeholder="Ex: Moeda Rara" />
-            <ValidationMessage For="() => Product.Name"/>
-        </div>
-        
-        <div class="col-md-6 mb-3">
-            <label class="form-label">Categoria</label>
-            <InputSelect class="form-select" @bind-Value="Product.CategoryId">
-                <option value="">Selecione...</option>
-                @if (_categories != null)
-                {
-                    @foreach (var cat in _categories)
-                    {
-                        <option value="@cat.Id">@cat.Name</option>
-                    }
-                }
-            </InputSelect>
-        </div>
-    </div>
+	@* Linha 1: Nome e Categoria *@
+	<div class="row">
+		<div class="col-md-6 mb-3">
+			<label class="form-label">Product Name</label>
+			<InputText class="form-control" @bind-Value="Product.Name" placeholder="Ex: Rare Coin" />
+			<ValidationMessage For="() => Product.Name" />
+		</div>
 
-    <div class="mb-3">
-        <label class="form-label">Descrição</label>
-        <InputTextArea class="form-control" @bind-Value="Product.Description" rows="3" />
-        <ValidationMessage For="() => Product.Description"/>
-    </div>
+		<div class="col-md-6 mb-3">
+			<label class="form-label">Category</label>
+			<InputSelect class="form-select" @bind-Value="Product.CategoryId">
+				<option value="">Select...</option>
+				@if (_categories != null)
+				{
+					@foreach (var cat in _categories)
+					{
+						<option value="@cat.Id">@cat.Name</option>
+					}
+				}
+			</InputSelect>
+		</div>
+	</div>
 
-    @* Linha 2: Preços e Stock *@
-    <div class="row">
-        <div class="col-md-4 mb-3">
-            <label class="form-label">Preço Base (€)</label>
-            <InputNumber class="form-control" @bind-Value="Product.BasePrice" />
-            <ValidationMessage For="() => Product.BasePrice"/>
-        </div>
-    
-        <div class="col-md-4 mb-3">
-            <label class="form-label">Taxa de Venda (%)</label>
-            <InputNumber class="form-control" @bind-Value="Product.SellTax" />
-            <ValidationMessage For="() => Product.SellTax"/>
-        </div>  
-        
-        <div class="col-md-4 mb-3">
-            <label class="form-label">Stock</label>
-            <InputNumber class="form-control" @bind-Value="Product.Stock"/>
-        </div>
-    </div>
-    
-    @* Linha 3: Enums (Tipo e Disponibilidade) *@
-    <div class="row">
-        <div class="col-md-6 mb-3">
-            <label class="form-label">Tipo de Produto</label>
-            <InputSelect @bind-Value="Product.ProductType" class="form-select">
-                @foreach (var type in Enum.GetValues(typeof(ProductType)))
-                {
-                    <option value="@type">@type</option>
-                }
-            </InputSelect>
-        </div>
+	<div class="mb-3">
+		<label class="form-label">Description</label>
+		<InputTextArea class="form-control" @bind-Value="Product.Description" rows="3" />
+		<ValidationMessage For="() => Product.Description" />
+	</div>
 
-        <div class="col-md-6 mb-3">
-            <label class="form-label">Disponibilidade</label>
-            <InputSelect @bind-Value="Product.AvailabilityMode" class="form-select">
-                @foreach (var mode in Enum.GetValues(typeof(AvailabilityMode)))
-                {
-                    <option value="@mode">@mode</option>
-                }
-            </InputSelect>
-        </div>
-    </div>
+	@* Linha 2: Preços e Stock *@
+	<div class="row">
+		<div class="col-md-4 mb-3">
+			<label class="form-label">Base Price (€)</label>
+			<InputNumber class="form-control" @bind-Value="Product.BasePrice" />
+			<ValidationMessage For="() => Product.BasePrice" />
+		</div>
 
-    @* Linha 4: Fornecedor e Checkboxes *@
-    <div class="row align-items-center">
-        <div class="col-md-6 mb-3">
-            <label class="form-label">Fornecedor (Supplier):</label>
-            <InputSelect class="form-control" @bind-Value="Product.SupplierId">
-                <option value="">Selecione...</option>
-                @if(_suppliers != null)
-                {
-                    @foreach (var sup in _suppliers)
-                    {
-                        <option value="@sup.Id">@sup.FullName (@sup.Email)</option>
-                    }
-                }
-            </InputSelect>
-        </div>
-        
-        <div class="col-md-6 mb-3">
-            <div class="form-check form-check-inline">
-                <InputCheckbox class="form-check-input" @bind-Value="Product.IsUsed" id="checkUsed"/>
-                <label class="form-check-label" for="checkUsed">Artigo Usado</label>
-            </div>
-            <div class="form-check form-check-inline">
-                <InputCheckbox class="form-check-input" @bind-Value="Product.IsActive" id="checkActive"/>
-                <label class="form-check-label" for="checkActive">Ativo (Visível)</label>
-            </div>
-        </div>
-    </div>
-    
-    @* Área de Imagens *@
-    <div class="mb-4 border p-3 rounded bg-light">
-        <label class="form-label fw-bold">Imagens do Produto</label>
-        <InputFile OnChange="OnInputFileChange" multiple class="form-control mb-2" accept="image/*"/>
-        
-        <div class="d-flex flex-wrap gap-3">
-            @* 1. Imagens já existentes na BD *@
-            @foreach (var image in Product.Images)
-            {
-                <div class="card shadow-sm" style="width: 120px;">
-                    <img src="@image.ImageUrl" class="card-img-top" style="height: 100px; object-fit: cover;"  alt=""/>
-                    <div class="card-body p-1 text-center">
-                        <button type="button" class="btn btn-danger btn-sm w-100" @onclick="() => RemoveDbImage(image)">
-                            <i class="bi bi-trash"></i> Apagar
-                        </button>
-                    </div>
-                </div>
-            }
-            
-            @* 2. Pré-visualização de NOVAS imagens *@
-            @foreach (var preview in _tempImagePreviews)
-            {
-                <div class="card shadow-sm border-success" style="width: 120px;">
-                    <img src="@preview.Base64" class="card-img-top" style="height: 100px; object-fit: cover; opacity: 0.8"  alt=""/>
-                    <div class="card-body p-1 text-center">
-                        <small class="text-success d-block">Novo</small>
-                        <button type="button" class="btn btn-secondary btn-sm w-100" @onclick="() => RemoveNewFile(preview)">
-                            <i class="bi bi-x"></i> Cancelar
-                        </button>
-                    </div>
-                </div>
-            }
-        </div>
-    </div>
+		<div class="col-md-4 mb-3">
+			<label class="form-label">Sell Tax (%)</label>
+			<InputNumber class="form-control" @bind-Value="Product.SellTax" />
+			<ValidationMessage For="() => Product.SellTax" />
+		</div>
 
-    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-        <button type="button" class="btn btn-secondary me-md-2" @onclick="GoBack">Cancelar</button>
-        <button type="submit" class="btn btn-success">
-            @if (Product.Id == 0) { <span>Criar Produto</span> }
-            else { <span>Guardar Alterações</span> }
-        </button>
-    </div>
+		<div class="col-md-4 mb-3">
+			<label class="form-label">Stock</label>
+			<InputNumber class="form-control" @bind-Value="Product.Stock" />
+		</div>
+	</div>
+
+	@* Linha 3: Enums (Tipo e Disponibilidade) *@
+	<div class="row">
+		<div class="col-md-6 mb-3">
+			<label class="form-label">Product Type</label>
+			<InputSelect @bind-Value="Product.ProductType" class="form-select">
+				@foreach (var type in Enum.GetValues(typeof(ProductType)))
+				{
+					<option value="@type">@type</option>
+				}
+			</InputSelect>
+		</div>
+
+		<div class="col-md-6 mb-3">
+			<label class="form-label">Availability</label>
+			<InputSelect @bind-Value="Product.AvailabilityMode" class="form-select">
+				@foreach (var mode in Enum.GetValues(typeof(AvailabilityMode)))
+				{
+					<option value="@mode">@mode</option>
+				}
+			</InputSelect>
+		</div>
+	</div>
+
+	@* Linha 4: Fornecedor e Checkboxes *@
+	<div class="row align-items-center">
+		<div class="col-md-6 mb-3">
+			<label class="form-label">Supplier:</label>
+			<InputSelect class="form-control" @bind-Value="Product.SupplierId">
+				<option value="">Select...</option>
+				@if (_suppliers != null)
+				{
+					@foreach (var sup in _suppliers)
+					{
+						<option value="@sup.Id">@sup.FullName (@sup.Email)</option>
+					}
+				}
+			</InputSelect>
+		</div>
+
+		<div class="col-md-6 mb-3">
+			<div class="form-check form-check-inline">
+				<InputCheckbox class="form-check-input" @bind-Value="Product.IsUsed" id="checkUsed" />
+				<label class="form-check-label" for="checkUsed">Used Item</label>
+			</div>
+			<div class="form-check form-check-inline">
+				<InputCheckbox class="form-check-input" @bind-Value="Product.IsActive" id="checkActive" />
+				<label class="form-check-label" for="checkActive">Active (Visible)</label>
+			</div>
+		</div>
+	</div>
+
+	@* Área de Imagens *@
+	<div class="mb-4 border p-3 rounded bg-light">
+		<label class="form-label fw-bold">Product Images</label>
+		<InputFile OnChange="OnInputFileChange" multiple class="form-control mb-2" accept="image/*" />
+
+		<div class="d-flex flex-wrap gap-3">
+			@* 1. Imagens já existentes na BD *@
+			@foreach (var image in Product.Images)
+			{
+				<div class="card shadow-sm" style="width: 120px;">
+					<img src="@image.ImageUrl" class="card-img-top" style="height: 100px; object-fit: cover;" alt="" />
+					<div class="card-body p-1 text-center">
+						<button type="button" class="btn btn-danger btn-sm w-100" @onclick="() => RemoveDbImage(image)">
+							<i class="bi bi-trash"></i> Delete
+						</button>
+					</div>
+				</div>
+			}
+
+			@* 2. Pré-visualização de NOVAS imagens *@
+			@foreach (var preview in _tempImagePreviews)
+			{
+				<div class="card shadow-sm border-success" style="width: 120px;">
+					<img src="@preview.Base64" class="card-img-top" style="height: 100px; object-fit: cover; opacity: 0.8"
+						alt="" />
+					<div class="card-body p-1 text-center">
+						<small class="text-success d-block">New</small>
+						<button type="button" class="btn btn-secondary btn-sm w-100"
+							@onclick="() => RemoveNewFile(preview)">
+							<i class="bi bi-x"></i> Cancel
+						</button>
+					</div>
+				</div>
+			}
+		</div>
+	</div>
+
+	<div class="d-grid gap-2 d-md-flex justify-content-md-end">
+		<button type="button" class="btn btn-secondary me-md-2" @onclick="GoBack">Cancel</button>
+		<button type="submit" class="btn btn-success">
+			@if (Product.Id == 0)
+			{
+				<span>Create Product</span>
+			}
+			else
+			{
+
+				<span>Save Changes</span>
+			}
+		</button>
+	</div>
 
 </EditForm>
 
 
 @code {
-    [Parameter] public int? ProductId { get; set; }
-    
-    // Objeto principal
-    public Product Product { get; set; } = new() 
-    { 
-        IsActive = true, 
-        ProductType = ProductType.Colecionável, 
-        AvailabilityMode = AvailabilityMode.Venda 
-    };
+	[Parameter] public int? ProductId { get; set; }
 
-    private List<Category>? _categories;
-    private List<ApplicationUser>? _suppliers;
-    
-    // Listas para gestão de upload
-    private List<IBrowserFile> _selectedFiles = new();
-    private List<ImagePreviewModel> _tempImagePreviews = new(); // Apenas visual
+	// Objeto principal
+	public Product Product { get; set; } = new()
+	{
+		IsActive = true,
+		ProductType = ProductType.Colecionável,
+		AvailabilityMode = AvailabilityMode.Venda
+	};
 
-    // Classe auxiliar para preview
-    private class ImagePreviewModel {
-        public IBrowserFile File { get; set; }
-        public string Base64 { get; set; }
-    }
+	private List<Category>? _categories;
+	private List<ApplicationUser>? _suppliers;
 
-    protected override async Task OnInitializedAsync()
-    {
-        await using var context = DbFactory.CreateDbContext();
-        _categories = await context.Categories.ToListAsync();
-        _suppliers = (await UserManager.GetUsersInRoleAsync(UserRoles.Supplier)).ToList(); 
-    }
+	// Listas para gestão de upload
+	private List<IBrowserFile> _selectedFiles = new();
+	private List<ImagePreviewModel> _tempImagePreviews = new(); // Apenas visual
 
-    protected override async Task OnParametersSetAsync()
-    {
-        if (ProductId.HasValue && ProductId.Value > 0)
-        {
-            await using var context = DbFactory.CreateDbContext();
-            var prod = await context.Products
-                .Include(p => p.Images)
-                .FirstOrDefaultAsync(p => p.Id == ProductId.Value);
+	// Classe auxiliar para preview
+	private class ImagePreviewModel
+	{
+		public IBrowserFile File { get; set; }
+		public string Base64 { get; set; }
+	}
 
-            if (prod != null) 
-            {
-                Product = prod;
-            }
-        }
-    }
+	protected override async Task OnInitializedAsync()
+	{
+		await using var context = DbFactory.CreateDbContext();
+		_categories = await context.Categories.ToListAsync();
+		_suppliers = (await UserManager.GetUsersInRoleAsync(UserRoles.Supplier)).ToList();
+	}
 
-    private async Task OnInputFileChange(InputFileChangeEventArgs e)
-    {
-        var files = e.GetMultipleFiles();
-        var maxFileSize = 1024 * 1024 * 5; // 5MB
+	protected override async Task OnParametersSetAsync()
+	{
+		if (ProductId.HasValue && ProductId.Value > 0)
+		{
+			await using var context = DbFactory.CreateDbContext();
+			var prod = await context.Products
+			.Include(p => p.Images)
+			.FirstOrDefaultAsync(p => p.Id == ProductId.Value);
 
-        foreach (var file in files)
-        {
-            // 1. Adiciona à lista oficial que será salva
-            _selectedFiles.Add(file);
+			if (prod != null)
+			{
+				Product = prod;
+			}
+		}
+	}
 
-            // 2. Gera preview para UI (lendo stream para memória)
-            try 
-            {
-                var buffer = new byte[file.Size];
-                await file.OpenReadStream(maxFileSize).ReadAsync(buffer);
-                var base64 = Convert.ToBase64String(buffer);
-                
-                _tempImagePreviews.Add(new ImagePreviewModel 
-                { 
-                    File = file, 
-                    Base64 = $"data:{file.ContentType};base64,{base64}" 
-                });
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Erro ao gerar preview: {ex.Message}");
-            }
-        }
-    }
+	private async Task OnInputFileChange(InputFileChangeEventArgs e)
+	{
+		var files = e.GetMultipleFiles();
+		var maxFileSize = 1024 * 1024 * 5; // 5MB
 
-    private void RemoveNewFile(ImagePreviewModel previewItem)
-    {
-        _tempImagePreviews.Remove(previewItem);
-        _selectedFiles.Remove(previewItem.File);
-    }
+		foreach (var file in files)
+		{
+			// 1. Adiciona à lista oficial que será salva
+			_selectedFiles.Add(file);
 
-    private async Task RemoveDbImage(ProductImage image)
-    {
-        // Remove da lista em memória para atualizar UI instantaneamente
-        Product.Images.Remove(image);
+			// 2. Gera preview para UI (lendo stream para memória)
+			try
+			{
+				var buffer = new byte[file.Size];
+				await file.OpenReadStream(maxFileSize).ReadAsync(buffer);
+				var base64 = Convert.ToBase64String(buffer);
 
-        // Se a imagem já existe na BD (Id > 0), removemos fisicamente
-        if (image.Id > 0)
-        {
-            await using var context = DbFactory.CreateDbContext();
-            context.Remove(image); // Remove da tabela ProductImages
-            await context.SaveChangesAsync();
+				_tempImagePreviews.Add(new ImagePreviewModel
+				{
+					File = file,
+					Base64 = $"data:{file.ContentType};base64,{base64}"
+				});
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Error loading preview: {ex.Message}");
+			}
+		}
+	}
 
-            // Apaga ficheiro do disco
-            var imagePath = Path.Combine(Env.WebRootPath, image.ImageUrl.TrimStart('/'));
-            if (File.Exists(imagePath))
-            {
-                File.Delete(imagePath);
-            }
-        }
-    }
+	private void RemoveNewFile(ImagePreviewModel previewItem)
+	{
+		_tempImagePreviews.Remove(previewItem);
+		_selectedFiles.Remove(previewItem.File);
+	}
 
-    private async Task HandleSubmit()
-    {
-        await using var context = DbFactory.CreateDbContext();
+	private async Task RemoveDbImage(ProductImage image)
+	{
+		// Remove da lista em memória para atualizar UI instantaneamente
+		Product.Images.Remove(image);
 
-        // 1. Processar Upload de Novas Imagens
-        if (_selectedFiles.Any())
-        {
-            var uploadPath = Path.Combine(Env.WebRootPath, "product-images");
-            Directory.CreateDirectory(uploadPath);
+		// Se a imagem já existe na BD (Id > 0), removemos fisicamente
+		if (image.Id > 0)
+		{
+			await using var context = DbFactory.CreateDbContext();
+			context.Remove(image); // Remove da tabela ProductImages
+			await context.SaveChangesAsync();
 
-            foreach (var file in _selectedFiles)
-            {
-                var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.Name)}";
-                var filePath = Path.Combine(uploadPath, fileName);
-                
-                // Gravar no disco
-                await using var stream = file.OpenReadStream(5120000);
-                await using var fs = new FileStream(filePath, FileMode.Create);
-                await stream.CopyToAsync(fs);
+			// Apaga ficheiro do disco
+			var imagePath = Path.Combine(Env.WebRootPath, image.ImageUrl.TrimStart('/'));
+			if (File.Exists(imagePath))
+			{
+				File.Delete(imagePath);
+			}
+		}
+	}
 
-                // Adicionar entidade
-                Product.Images.Add(new ProductImage
-                {
-                    ImageUrl = $"/product-images/{fileName}",
-                    IsPrimary = !Product.Images.Any() // Se for a primeira, é primária
-                });
-            }
-        }
+	private async Task HandleSubmit()
+	{
+		await using var context = DbFactory.CreateDbContext();
 
-        // 2. Guardar Produto (Insert ou Update)
-        // Nota: Como o contexto é novo, precisamos anexar ou atualizar com cuidado
-        if (Product.Id == 0)
-        { 
-            context.Products.Add(Product); 
-        }
-        else
-        { 
-            context.Products.Update(Product); 
-        }
+		// 1. Processar Upload de Novas Imagens
+		if (_selectedFiles.Any())
+		{
+			var uploadPath = Path.Combine(Env.WebRootPath, "product-images");
+			Directory.CreateDirectory(uploadPath);
 
-        await context.SaveChangesAsync();
-        
-        // Limpar listas temporárias
-        _selectedFiles.Clear();
-        _tempImagePreviews.Clear();
+			foreach (var file in _selectedFiles)
+			{
+				var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.Name)}";
+				var filePath = Path.Combine(uploadPath, fileName);
 
-        GoBack();
-    }
+				// Gravar no disco
+				await using var stream = file.OpenReadStream(5120000);
+				await using var fs = new FileStream(filePath, FileMode.Create);
+				await stream.CopyToAsync(fs);
 
-    private void GoBack()
-    {
-        NavManager.NavigateTo("/products");
-    }
+				// Adicionar entidade
+				Product.Images.Add(new ProductImage
+				{
+					ImageUrl = $"/product-images/{fileName}",
+					IsPrimary = !Product.Images.Any() // Se for a primeira, é primária
+				});
+			}
+		}
+
+		// 2. Guardar Produto (Insert ou Update)
+		// Nota: Como o contexto é novo, precisamos anexar ou atualizar com cuidado
+		if (Product.Id == 0)
+		{
+			context.Products.Add(Product);
+		}
+		else
+		{
+			context.Products.Update(Product);
+		}
+
+		await context.SaveChangesAsync();
+
+		// Limpar listas temporárias
+		_selectedFiles.Clear();
+		_tempImagePreviews.Clear();
+
+		GoBack();
+	}
+
+	private void GoBack()
+	{
+		NavManager.NavigateTo("/products");
+	}
 }

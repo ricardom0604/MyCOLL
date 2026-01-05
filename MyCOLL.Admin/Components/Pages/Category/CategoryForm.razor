@@ -11,89 +11,94 @@
 
 
 <EditForm Model="Category" OnValidSubmit="HandleSubmit">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
-    
-    <div class="mb-3">
-        <label class="form-label">Nome:</label>
-        <InputText class="form-control" @bind-Value="Category.Name"/>
-        <ValidationMessage For="() => Category.Name"/>
-        
-        <label class="form-label">Categoria Pai:</label>
-        <InputSelect class="form-select" @bind-Value="Category.ParentCategoryId">
-            <option value="">Selecione...</option>
-            @foreach (var c in AllCategories)
-            {
-                <option value="@c.Id">@c.Name</option>
-            }
-        </InputSelect>
-        
-        @if (Category.SubCategories != null)
-        {
-            <div class="form-label">Sub-Categorias: </div>
-            @foreach (var subCat in Category.SubCategories)
-            {
-                <div>- @subCat.Name</div>
-            }
-        }
-    </div>
+	<DataAnnotationsValidator />
+	<ValidationSummary />
 
-    <button type="submit" class="btn btn-primary">
-        @if (Category.Id == 0)
-        { <span>Criar Categoria</span> }
-        else
-        { <span>Guardar Alterações</span> }
-    </button>
+	<div class="mb-3">
+		<label class="form-label">Name:</label>
+		<InputText class="form-control" @bind-Value="Category.Name" />
+		<ValidationMessage For="() => Category.Name" />
 
-    <button type="button" class="btn btn-secondary" @onclick="() => GoBack()">Cancelar</button>
+		<label class="form-label">Parent Category:</label>
+		<InputSelect class="form-select" @bind-Value="Category.ParentCategoryId">
+			<option value="">Select...</option>
+			@foreach (var c in AllCategories)
+			{
+				<option value="@c.Id">@c.Name</option>
+			}
+		</InputSelect>
+
+		@if (Category.SubCategories != null)
+		{
+			<div class="form-label">Sub-Categories: </div>
+			@foreach (var subCat in Category.SubCategories)
+			{
+				<div>- @subCat.Name</div>
+			}
+		}
+	</div>
+
+	<button type="submit" class="btn btn-primary">
+		@if (Category.Id == 0)
+		{
+			<span>Create Category</span>
+		}
+		else
+		{
+
+			<span>Save Changes</span>
+		}
+	</button>
+
+	<button type="button" class="btn btn-secondary" @onclick="() => GoBack()">Cancel</button>
 
 </EditForm>
 
 @code {
-    [Parameter] public int? CategoryId { get; set; }
-    [Parameter] public Category Category { get; set; } = new();
-    [Parameter] public EventCallback OnValidSubmit { get; set; }
-    
-    private ICollection<Category> AllCategories { get; set; } = new List<Category>();
-    
-    protected override async Task OnParametersSetAsync()
-    {
-        await using var context = DbFactory.CreateDbContext();
-        
-        if (CategoryId.HasValue && CategoryId.Value > 0)
-        {
-            var cat = await context.Categories.FindAsync(CategoryId.Value);
-            if (cat != null) Category = cat;
-        }
-        else
-        {
-            Category = new Category();
-        }
-        
-        AllCategories = await context.Categories
-            .Where(c => c.Id != Category.Id)
-            .ToListAsync();
-        
-    }
-    
-    private async Task HandleSubmit()
-    {
-        await using var context = DbFactory.CreateDbContext();
-        if (Category.Id == 0)
-        {
-            context.Categories.Add(Category);
-        }
-        else
-        {
-            context.Categories.Update(Category);
-        }
-        
-        await context.SaveChangesAsync();
-        GoBack();
-    }
-    
-    private void GoBack()
-    {
-        NavManager.NavigateTo("/categories");
-    }
+	[Parameter] public int? CategoryId { get; set; }
+	[Parameter] public Category Category { get; set; } = new();
+	[Parameter] public EventCallback OnValidSubmit { get; set; }
+
+	private ICollection<Category> AllCategories { get; set; } = new List<Category>();
+
+	protected override async Task OnParametersSetAsync()
+	{
+		await using var context = DbFactory.CreateDbContext();
+
+		if (CategoryId.HasValue && CategoryId.Value > 0)
+		{
+			var cat = await context.Categories.FindAsync(CategoryId.Value);
+			if (cat != null) Category = cat;
+		}
+		else
+		{
+			Category = new Category();
+		}
+
+		AllCategories = await context.Categories
+		.Where(c => c.Id != Category.Id)
+		.ToListAsync();
+
+	}
+
+	private async Task HandleSubmit()
+	{
+		await using var context = DbFactory.CreateDbContext();
+		if (Category.Id == 0)
+		{
+			context.Categories.Add(Category);
+		}
+		else
+		{
+			context.Categories.Update(Category);
+		}
+
+		await context.SaveChangesAsync();
+		GoBack();
+	}
+
+	private void GoBack()
+	{
+		NavManager.NavigateTo("/categories");
+	}
 }
