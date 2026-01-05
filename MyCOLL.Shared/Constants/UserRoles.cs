@@ -2,8 +2,8 @@ namespace MyCOLL.Shared.Constants;
 
 public class UserRoles
 {
-    public const string Admin = "Administrador";
-    public const string Employee = "Funcionário";
-    public const string Supplier = "Fornecedor";
-    public const string Client = "Cliente";
+	public const string Admin = "Administrator";
+	public const string Employee = "Employee";
+	public const string Supplier = "Supplier";
+	public const string Client = "Client";
 }

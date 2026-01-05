@@ -7,16 +7,16 @@
 @inject HttpClient Http
 @inject NavigationManager NavManager
 
-<PageTitle>O Meu Carrinho</PageTitle>
+<PageTitle>My Cart</PageTitle>
 
 <div class="container mt-4">
-    <h3><i class="bi bi-cart3"></i> Carrinho de Compras</h3>
+    <h3><i class="bi bi-cart3"></i> Shopping Cart</h3>
 
     @if (!CartService.Items.Any())
     {
         <div class="alert alert-warning mt-4 text-center">
-            <h5>O seu carrinho está vazio.</h5>
-            <a href="/" class="btn btn-primary mt-3">Voltar à Loja</a>
+            <h5>Your cart is empty.</h5>
+            <a href="/" class="btn btn-primary mt-3">Back to Store</a>
         </div>
     }
     else
@@ -44,7 +44,7 @@
                                 <div class="card-body d-flex justify-content-between align-items-center">
                                     <div>
                                         <h5 class="card-title mb-1">@item.Product.Name</h5>
-                                        <small class="text-muted">Unitário: @item.Product.FinalPrice.ToString("C")</small>
+                                        <small class="text-muted">Unit Price: @item.Product.FinalPrice.ToString("C")</small>
                                     </div>
                                     
                                     <div class="d-flex align-items-center gap-2">
@@ -66,13 +66,13 @@
             <div class="col-md-4">
                 <div class="card shadow-sm bg-light">
                     <div class="card-body">
-                        <h4 class="card-title mb-4">Resumo</h4>
+                        <h4 class="card-title mb-4">Summary</h4>
                         <div class="d-flex justify-content-between mb-3">
-                            <span>Total Itens:</span>
+                            <span>Total Items:</span>
                             <strong>@CartService.Items.Sum(i => i.Quantity)</strong>
                         </div>
                         <div class="d-flex justify-content-between mb-4">
-                            <span class="fs-5">Total a Pagar:</span>
+                            <span class="fs-5">Amount Due:</span>
                             <span class="fs-4 fw-bold text-success">@CartService.TotalAmount().ToString("0.00") €</span>
                         </div>
 
@@ -81,19 +81,19 @@
                                 <button class="btn btn-success w-100 py-2" @onclick="Checkout" disabled="@_isProcessing">
                                     @if (_isProcessing)
                                     {
-                                        <span class="spinner-border spinner-border-sm"></span> <span>A processar...</span>
+                                        <span class="spinner-border spinner-border-sm"></span> <span>Processing...</span>
                                     }
                                     else
                                     {
-                                        <span><i class="bi bi-check-circle"></i> Finalizar Pedido</span>
+                                        <span><i class="bi bi-check-circle"></i> Place Order</span>
                                     }
                                 </button>
                             </Authorized>
                             <NotAuthorized>
                                 <div class="alert alert-info small">
-                                    Precisa de estar logado para finalizar a compra.
+                                    You need to be logged in to checkout.
                                 </div>
-                                <a href="/login" class="btn btn-primary w-100">Fazer Login</a>
+                                <a href="/login" class="btn btn-primary w-100">Log In</a>
                             </NotAuthorized>
                         </AuthorizeView>
                     </div>
@@ -106,7 +106,7 @@
 @code {
     private bool _isProcessing = false;
 
-    // Método auxiliar para imagens (igual ao da Home)
+    // Helper to resolve image URLs (same as Home)
     private string GetFullUrl(string path)
     {
         if (path.StartsWith("http")) return path;
@@ -115,8 +115,8 @@
 
     private static void IncreaseQty(CartItem item)
     {
-        // Opcional: Verificar Stock máximo aqui
-        // if (item.Quantity < item.Product.Stock) 
+        // Optional: check max stock here
+        // if (item.Quantity < item.Product.Stock)
         item.Quantity++;
     }
 
@@ -133,8 +133,8 @@
         _isProcessing = true;
         try
         {
-            // 1. Criar o DTO de Encomenda
-            // Nota: Criei este DTO abaixo (OrderCreateDto) para enviar para a API
+            // 1. Build order DTO
+            // Note: using OrderCreateDto to send to the API
             var orderDto = new OrderCreateDto
             {
                 Items = CartService.Items.Select(i => new OrderItemDto 
@@ -144,28 +144,28 @@
                 }).ToList()
             };
 
-            // 2. Enviar para a API
+            // 2. Send to API
             var response = await Http.PostAsJsonAsync("api/order", orderDto);
 
             if (response.IsSuccessStatusCode)
             {
-                CartService.Clear(); // Limpa o carrinho
-                await JsRuntime.InvokeVoidAsync("alert", "Encomenda realizada com sucesso!");
-                NavManager.NavigateTo("/order/history"); // Vai para o histórico
+                CartService.Clear(); // Clear cart
+                await JsRuntime.InvokeVoidAsync("alert", "Order placed successfully!");
+                NavManager.NavigateTo("/order/history"); // Go to history
             }
             else
             {
-                // MUDANÇA IMPORTANTE: Ler o conteúdo do erro
+                // Important: log API error content
                 var errorContent = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"ERRO API ({response.StatusCode}): {errorContent}");
+                Console.WriteLine($"API ERROR ({response.StatusCode}): {errorContent}");
             
                 await JsRuntime.InvokeVoidAsync("alert", 
-                    $"Falha ao criar: {response.StatusCode}. Veja o log.");
+                    $"Failed to create: {response.StatusCode}. Check the log.");
             }
         }
         catch (Exception ex)
         {
-            await JsRuntime.InvokeVoidAsync("alert", $"Erro de conexão: {ex.Message}");
+            await JsRuntime.InvokeVoidAsync("alert", $"Connection error: {ex.Message}");
         }
         finally
         {

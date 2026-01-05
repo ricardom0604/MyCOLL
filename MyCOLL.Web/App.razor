@@ -2,31 +2,31 @@
 @using MyCOLL.Shared.Components.Layout
 
 <CascadingAuthenticationState>
-    
-    <Router AppAssembly="@typeof(Program).Assembly" 
-            AdditionalAssemblies="new[] { typeof(MyCOLL.Shared.Components.Pages.Home).Assembly }">
-        
-        <Found Context="routeData">
-            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
-                <NotAuthorized>
-                    <div class="alert alert-danger m-4">
-                        Não tem permissão para aceder a esta página. <a href="/login">Faça Login</a>.
-                    </div>
-                </NotAuthorized>
-                <Authorizing>
-                    <div class="p-4">A verificar autenticação...</div>
-                </Authorizing>
-            </AuthorizeRouteView>
-            
-            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
-        </Found>
 
-        <NotFound>
-            <PageTitle>Not found</PageTitle>
-            <LayoutView Layout="@typeof(MainLayout)">
-                <p role="alert">Desculpe, não há nada neste endereço.</p>
-            </LayoutView>
-        </NotFound>
-    </Router>
+	<Router AppAssembly="@typeof(Program).Assembly"
+		AdditionalAssemblies="new[] { typeof(MyCOLL.Shared.Components.Pages.Home).Assembly }">
+
+		<Found Context="routeData">
+			<AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+				<NotAuthorized>
+					<div class="alert alert-danger m-4">
+						You don't have permission to access this page. <a href="/login">Login</a>.
+					</div>
+				</NotAuthorized>
+				<Authorizing>
+					<div class="p-4">Checking authentication...</div>
+				</Authorizing>
+			</AuthorizeRouteView>
+
+			<FocusOnNavigate RouteData="@routeData" Selector="h1" />
+		</Found>
+
+		<NotFound>
+			<PageTitle>Not found</PageTitle>
+			<LayoutView Layout="@typeof(MainLayout)">
+				<p role="alert">Sorry, there is nothing at this address.</p>
+			</LayoutView>
+		</NotFound>
+	</Router>
 
 </CascadingAuthenticationState>

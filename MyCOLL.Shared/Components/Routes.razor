@@ -1,19 +1,18 @@
 ﻿<CascadingAuthenticationState>
-    <Router AppAssembly="@typeof(MainLayout).Assembly">
-        <Found Context="routeData">
-            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
-                <NotAuthorized>
-                    <h1>Access Denied</h1>
-                    <p>You do not have permission to view this page.</p>
-                </NotAuthorized>
-            </AuthorizeRouteView>
-            <FocusOnNavigate RouteData="@routeData" Selector="h1"/>
-        </Found>
-        <NotFound>
-            <LayoutView Layout="@typeof(MainLayout)">
-                <p role="alert">Page not found.</p>
-            </LayoutView>
-        </NotFound>
-    </Router>
+	<Router AppAssembly="@typeof(MainLayout).Assembly">
+		<Found Context="routeData">
+			<AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+				<NotAuthorized>
+					<h1>Access Denied</h1>
+					<p>You do not have permission to view this page.</p>
+				</NotAuthorized>
+			</AuthorizeRouteView>
+			<FocusOnNavigate RouteData="@routeData" Selector="h1" />
+		</Found>
+		<NotFound>
+			<LayoutView Layout="@typeof(MainLayout)">
+				<p role="alert">Page not found.</p>
+			</LayoutView>
+		</NotFound>
+	</Router>
 </CascadingAuthenticationState>
-

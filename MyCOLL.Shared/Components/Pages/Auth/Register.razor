@@ -8,132 +8,135 @@
 @inject AuthenticationStateProvider AuthStateProvider
 
 <div class="container mt-4" style="max-width: 500px;">
-    <div class="card shadow">
-        <div class="card-header bg-success text-white text-center">
-            <h3>Criar Nova Conta</h3>
-        </div>
-        <div class="card-body">
-            <EditForm Model="@_registerModel" OnSubmit="HandleRegistration">
-                <DataAnnotationsValidator />
-                
-                @if (!string.IsNullOrEmpty(_errorMessage))
-                {
-                    <div class="alert alert-danger">@_errorMessage</div>
-                }
+	<div class="card shadow">
+		<div class="card-header bg-success text-white text-center">
+			<h3>Create Account</h3>
+		</div>
+		<div class="card-body">
+			<EditForm Model="@_registerModel" OnSubmit="HandleRegistration">
+				<DataAnnotationsValidator />
 
-                <div class="mb-3">
-                    <label class="form-label">Nome Completo</label>
-                    <InputText @bind-Value="_registerModel.FullName" class="form-control" placeholder="O seu nome" />
-                    <ValidationMessage For="@(() => _registerModel.FullName)" />
-                </div>
+				@if (!string.IsNullOrEmpty(_errorMessage))
+				{
+					<div class="alert alert-danger">@_errorMessage</div>
+				}
 
-                <div class="mb-3">
-                    <label class="form-label">Email</label>
-                    <InputText @bind-Value="_registerModel.Email" class="form-control" placeholder="exemplo@email.com" />
-                    <ValidationMessage For="@(() => _registerModel.Email)" />
-                </div>
+				<div class="mb-3">
+					<label class="form-label">Full Name</label>
+					<InputText @bind-Value="_registerModel.FullName" class="form-control" placeholder="Your name" />
+					<ValidationMessage For="@(() => _registerModel.FullName)" />
+				</div>
 
-                <div class="mb-3">
-                    <label class="form-label">Password</label>
-                    <InputText @bind-Value="_registerModel.Password" type="password" class="form-control" placeholder="******" />
-                    <ValidationMessage For="@(() => _registerModel.Password)" />
-                </div>
+				<div class="mb-3">
+					<label class="form-label">Email</label>
+					<InputText @bind-Value="_registerModel.Email" class="form-control"
+						placeholder="exemplo@email.com" />
+					<ValidationMessage For="@(() => _registerModel.Email)" />
+				</div>
 
-                <div class="mb-3">
-                    <label class="form-label">Confirmar Password</label>
-                    <InputText @bind-Value="_registerModel.ConfirmPassword" type="password" class="form-control" placeholder="******" />
-                    <ValidationMessage For="@(() => _registerModel.ConfirmPassword)" />
-                </div>
-                
-                <div class="mb-3">
-                    <label class="form-label">NIF</label>
-                    <InputText @bind-Value="_registerModel.Nif" class="form-control" placeholder="123456789" />
-                    <ValidationMessage For="@(() => _registerModel.Nif)" />
-                </div>
-                
-                <div class="mb-3">
-                    <label class="form-label">Morada</label>
-                    <InputText @bind-Value="_registerModel.Address" class="form-control" placeholder="Rua..." />
-                    <ValidationMessage For="@(() => _registerModel.Address)" />
-                </div>
-                
-                <div class="mb-3">
-                    <label class="form-label">Tipo de Conta</label>
-                    <InputSelect @bind-Value="_registerModel.Role" class="form-select">
-                        <option value="@UserRoles.Client">Cliente (Quero Comprar)</option>
-                        <option value="@UserRoles.Supplier">Fornecedor (Quero Vender)</option>
-                    </InputSelect>
-                </div>
+				<div class="mb-3">
+					<label class="form-label">Password</label>
+					<InputText @bind-Value="_registerModel.Password" type="password" class="form-control"
+						placeholder="******" />
+					<ValidationMessage For="@(() => _registerModel.Password)" />
+				</div>
 
-                <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-success" disabled="@_isLoading">
-                        @if (_isLoading)
-                        {
-                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                            <span> A criar conta...</span>
-                        }
-                        else
-                        {
-                            <span>Registar</span>
-                        }
-                    </button>
-                    <a href="/auth/login" class="btn btn-outline-secondary">Já tenho conta</a>
-                </div>
-            </EditForm>
-        </div>
-    </div>
+				<div class="mb-3">
+					<label class="form-label">Confirm Password</label>
+					<InputText @bind-Value="_registerModel.ConfirmPassword" type="password" class="form-control"
+						placeholder="******" />
+					<ValidationMessage For="@(() => _registerModel.ConfirmPassword)" />
+				</div>
+
+				<div class="mb-3">
+					<label class="form-label">NIF</label>
+					<InputText @bind-Value="_registerModel.Nif" class="form-control" placeholder="123456789" />
+					<ValidationMessage For="@(() => _registerModel.Nif)" />
+				</div>
+
+				<div class="mb-3">
+					<label class="form-label">Address</label>
+					<InputText @bind-Value="_registerModel.Address" class="form-control" placeholder="Street..." />
+					<ValidationMessage For="@(() => _registerModel.Address)" />
+				</div>
+
+				<div class="mb-3">
+					<label class="form-label">Account Type</label>
+					<InputSelect @bind-Value="_registerModel.Role" class="form-select">
+						<option value="@UserRoles.Client">Client (I want to buy)</option>
+						<option value="@UserRoles.Supplier">Supplier (I want to sell)</option>
+					</InputSelect>
+				</div>
+
+				<div class="d-grid gap-2">
+					<button type="submit" class="btn btn-success" disabled="@_isLoading">
+						@if (_isLoading)
+						{
+							<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+							<span> Creating account...</span>
+						}
+						else
+						{
+							<span>Register</span>
+						}
+					</button>
+					<a href="/auth/login" class="btn btn-outline-secondary">I already have an account</a>
+				</div>
+			</EditForm>
+		</div>
+	</div>
 </div>
 
 @code {
-    // Nota: Certifique-se que o RegisterDto tem a propriedade 'Role'
-    private RegisterDto _registerModel = new() { Role = UserRoles.Client }; // Default: Cliente
-    private string _errorMessage = string.Empty;
-    private bool _isLoading = false;
+	// Nota: Certifique-se que o RegisterDto tem a propriedade 'Role'
+	private RegisterDto _registerModel = new() { Role = UserRoles.Client }; // Default: Client
+	private string _errorMessage = string.Empty;
+	private bool _isLoading = false;
 
-    private async Task HandleRegistration()
-    {
-        _isLoading = true;
-        _errorMessage = string.Empty;
+	private async Task HandleRegistration()
+	{
+		_isLoading = true;
+		_errorMessage = string.Empty;
 
-        try
-        {
-            // 1. Envia pedido para a API
-            var response = await Http.PostAsJsonAsync("api/auth/register", _registerModel);
+		try
+		{
+			// 1. Envia pedido para a API
+			var response = await Http.PostAsJsonAsync("api/auth/register", _registerModel);
 
-            if (response.IsSuccessStatusCode)
-            {
-                // 2. Se a API retornar o Token logo no registo (Melhor UX)
-                var result = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
+			if (response.IsSuccessStatusCode)
+			{
+				// 2. Se a API retornar o Token logo no registo (Melhor UX)
+				var result = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
 
-                if (result != null && !string.IsNullOrEmpty(result.Token))
-                {
-                    // Faz Login Automático
-                    if (AuthStateProvider is IAuthService authService)
-                    {
-                        await authService.Login(result.Token);
-                        NavManager.NavigateTo("/");
-                    }
-                }
-                else
-                {
-                    // Caso a API não retorne token (apenas 200 OK), redireciona para login
-                    NavManager.NavigateTo("/auth/login");
-                }
-            }
-            else
-            {
-                // Lê erro da API (ex: "Email já existe")
-                var errorContent = await response.Content.ReadAsStringAsync();
-                _errorMessage = $"Erro ao registar: {errorContent}";
-            }
-        }
-        catch (Exception ex)
-        {
-            _errorMessage = $"Erro de conexão: {ex.Message}";
-        }
-        finally
-        {
-            _isLoading = false;
-        }
-    }
+				if (result != null && !string.IsNullOrEmpty(result.Token))
+				{
+					// Faz Login Automático
+					if (AuthStateProvider is IAuthService authService)
+					{
+						await authService.Login(result.Token);
+						NavManager.NavigateTo("/");
+					}
+				}
+				else
+				{
+					// Caso a API não retorne token (apenas 200 OK), redireciona para login
+					NavManager.NavigateTo("/auth/login");
+				}
+			}
+			else
+			{
+				// Lê erro da API (ex: "Email já existe")
+				var errorContent = await response.Content.ReadAsStringAsync();
+				_errorMessage = $"Error registering: {errorContent}";
+			}
+		}
+		catch (Exception ex)
+		{
+			_errorMessage = $"Connection error: {ex.Message}";
+		}
+		finally
+		{
+			_isLoading = false;
+		}
+	}
 }

@@ -23,6 +23,18 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
+// Configure CORS
+builder.Services.AddCors(options =>
+{
+	options.AddPolicy("AllowBlazorClient", policy =>
+	{
+		policy.WithOrigins("https://localhost:7045", "http://localhost:5177")
+			.AllowAnyMethod()
+			.AllowAnyHeader()
+			.AllowCredentials();
+	});
+});
+
 // Configure Identity with ApplicationUser and IdentityRole
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 	.AddEntityFrameworkStores<ApplicationDbContext>()
@@ -110,13 +122,12 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-	app.UseSwagger();
-	app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
+// Enable CORS
+app.UseCors("AllowBlazorClient");
 
 // 1. Permite servir ficheiros da própria pasta wwwroot da API (padrão)
 app.UseStaticFiles();

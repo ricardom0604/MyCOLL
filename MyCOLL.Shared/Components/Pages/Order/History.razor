@@ -1,4 +1,4 @@
-@page "/order/history" 
+@page "/order/history"
 @using MyCOLL.Shared.Models.Dto
 @using Microsoft.AspNetCore.Authorization
 
@@ -6,96 +6,96 @@
 @inject HttpClient Http
 
 <div class="container mt-4">
-    <h3 class="mb-4">⏰ Histórico de Encomendas</h3>
+	<h3 class="mb-4">⏰ Order History</h3>
 
-    @if (_isLoading)
-    {
-        <div class="d-flex justify-content-center mt-5">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">A carregar...</span>
-            </div>
-        </div>
-    }
-    else if (_orders.Count == 0 || !_orders.Any())
-    {
-        <div class="alert alert-info text-center shadow-sm">
-            <h4>Ainda não fez nenhuma encomenda.</h4>
-            <p>Visite a loja e encontre os melhores colecionáveis!</p>
-            <a href="/" class="btn btn-primary mt-2">Ir para a Loja</a>
-        </div>
-    }
-    else
-    {
-        <div class="table-responsive shadow-sm rounded">
-            <table class="table table-hover align-middle bg-white mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>#ID</th>
-                        <th>Data</th>
-                        <th>Estado</th>
-                        <th>Itens</th>
-                        <th>Total</th>
-                        <th class="text-end">Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var order in _orders)
-                    {
-                        <tr>
-                            <td class="fw-bold">#@order.Id</td>
-                            <td>@order.OrderDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
-                            <td>
-                                <span class="badge @GetStatusColor(order.Status)">
-                                    @order.Status
-                                </span>
-                            </td>
-                            <td>@order.Items.Sum(i => i.Quantity) un.</td>
-                            <td class="fw-bold text-success">@order.TotalAmount.ToString("C")</td>
-                            <td class="text-end">
-                                <a href="/order/details/@order.Id" class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-eye"></i> Detalhes
-                                </a>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    }
+	@if (_isLoading)
+	{
+		<div class="d-flex justify-content-center mt-5">
+			<div class="spinner-border text-primary" role="status">
+				<span class="visually-hidden">Loading...</span>
+			</div>
+		</div>
+	}
+	else if (_orders.Count == 0 || !_orders.Any())
+	{
+		<div class="alert alert-info text-center shadow-sm">
+			<h4>You have no orders yet.</h4>
+			<p>Visit the store and find the best collectibles!</p>
+			<a href="/" class="btn btn-primary mt-2">Go to Store</a>
+		</div>
+	}
+	else
+	{
+		<div class="table-responsive shadow-sm rounded">
+			<table class="table table-hover align-middle bg-white mb-0">
+				<thead class="table-light">
+					<tr>
+						<th>#ID</th>
+						<th>Date</th>
+						<th>Status</th>
+						<th>Items</th>
+						<th>Total</th>
+						<th class="text-end">Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					@foreach (var order in _orders)
+					{
+						<tr>
+							<td class="fw-bold">#@order.Id</td>
+							<td>@order.OrderDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+							<td>
+								<span class="badge @GetStatusColor(order.Status)">
+									@order.Status
+								</span>
+							</td>
+							<td>@order.Items.Sum(i => i.Quantity) pcs</td>
+							<td class="fw-bold text-success">@order.TotalAmount.ToString("C")</td>
+							<td class="text-end">
+								<a href="/order/details/@order.Id" class="btn btn-sm btn-outline-primary">
+									<i class="bi bi-eye"></i> Details
+								</a>
+							</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+	}
 </div>
 
 @code {
-    private List<OrderDto> _orders = new();
-    private bool _isLoading = true;
+	private List<OrderDto> _orders = new();
+	private bool _isLoading = true;
 
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            // Busca as encomendas do endpoint que criámos no Passo 2
-            _orders = await Http.GetFromJsonAsync<List<OrderDto>>("api/Order/my") ?? new List<OrderDto>();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Erro ao carregar histórico: {ex.Message}");
-        }
-        finally
-        {
-            _isLoading = false;
-        }
-    }
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			// Fetch orders from API endpoint
+			_orders = await Http.GetFromJsonAsync<List<OrderDto>>("api/Order/my") ?? new List<OrderDto>();
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Error loading history: {ex.Message}");
+		}
+		finally
+		{
+			_isLoading = false;
+		}
+	}
 
-    // Método auxiliar para dar cor aos Badges consoante o estado
-    private string GetStatusColor(string status)
-    {
-        return status.ToLower() switch
-        {
-            "pending" => "bg-warning text-dark",    // Amarelo
-            "paid" => "bg-info text-dark",          // Azul Claro
-            "shipped" => "bg-primary",              // Azul Escuro
-            "delivered" => "bg-success",            // Verde
-            "cancelled" => "bg-danger",             // Vermelho
-            _ => "bg-secondary"                     // Cinzento (Padrão)
-        };
-    }
+	// Helper to color badges based on status
+	private string GetStatusColor(string status)
+	{
+		return status.ToLower() switch
+		{
+			"pending" => "bg-warning text-dark", // Yellow
+			"paid" => "bg-info text-dark", // Light Blue
+			"shipped" => "bg-primary", // Dark Blue
+			"delivered" => "bg-success", // Green
+			"cancelled" => "bg-danger", // Red
+			_ => "bg-secondary" // Gray (default)
+		};
+	}
 }

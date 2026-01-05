@@ -7,101 +7,102 @@
 @inject AuthenticationStateProvider AuthStateProvider
 
 <div class="container mt-5" style="max-width: 400px;">
-    <div class="card shadow">
-        <div class="card-header bg-primary text-white text-center">
-            <h3>Entrar na Loja</h3>
-        </div>
-        <div class="card-body">
-            <EditForm Model="@_loginModel" OnValidSubmit="HandleLogin">
-                <DataAnnotationsValidator />
-                
-                @if (!string.IsNullOrEmpty(_errorMessage))
-                {
-                    <div class="alert alert-danger">@_errorMessage</div>
-                }
+	<div class="card shadow">
+		<div class="card-header bg-primary text-white text-center">
+			<h3>Login to Store</h3>
+		</div>
+		<div class="card-body">
+			<EditForm Model="@_loginModel" OnValidSubmit="HandleLogin">
+				<DataAnnotationsValidator />
 
-                <div class="mb-3">
-                    <label class="form-label">Email</label>
-                    <InputText @bind-Value="_loginModel.Email" class="form-control" placeholder="exemplo@email.com" />
-                    <ValidationMessage For="@(() => _loginModel.Email)" />
-                </div>
+				@if (!string.IsNullOrEmpty(_errorMessage))
+				{
+					<div class="alert alert-danger">@_errorMessage</div>
+				}
 
-                <div class="mb-3">
-                    <label class="form-label">Password</label>
-                    <InputText @bind-Value="_loginModel.Password" type="password" class="form-control" placeholder="******" />
-                    <ValidationMessage For="@(() => _loginModel.Password)" />
-                </div>
+				<div class="mb-3">
+					<label class="form-label">Email</label>
+					<InputText @bind-Value="_loginModel.Email" class="form-control" placeholder="exemplo@email.com" />
+					<ValidationMessage For="@(() => _loginModel.Email)" />
+				</div>
 
-                <button type="submit" class="btn btn-primary w-100" disabled="@_isLoading">
-                    @if (_isLoading)
-                    {
-                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        <span> A entrar...</span>
-                    }
-                    else
-                    {
-                        <span>Login</span>
-                    }
-                </button>
-            </EditForm>
-        </div>
-        <div class="card-footer text-center">
-            <small>Ainda não tem conta? <a href="/auth/register">Registe-se aqui</a></small>
-        </div>
-    </div>
+				<div class="mb-3">
+					<label class="form-label">Password</label>
+					<InputText @bind-Value="_loginModel.Password" type="password" class="form-control"
+						placeholder="******" />
+					<ValidationMessage For="@(() => _loginModel.Password)" />
+				</div>
+
+				<button type="submit" class="btn btn-primary w-100" disabled="@_isLoading">
+					@if (_isLoading)
+					{
+						<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+						<span> Logging in...</span>
+					}
+					else
+					{
+						<span>Login</span>
+					}
+				</button>
+			</EditForm>
+		</div>
+		<div class="card-footer text-center">
+			<small>You don't have an account? <a href="/auth/register">Register here</a></small>
+		</div>
+	</div>
 </div>
 
 @code {
-    private LoginDto _loginModel = new();
-    private string _errorMessage = string.Empty;
-    private bool _isLoading = false;
+	private LoginDto _loginModel = new();
+	private string _errorMessage = string.Empty;
+	private bool _isLoading = false;
 
-    private async Task HandleLogin()
-    {
-        _isLoading = true;
-        _errorMessage = string.Empty;
+	private async Task HandleLogin()
+	{
+		_isLoading = true;
+		_errorMessage = string.Empty;
 
-        try
-        {
-            // 1. Chama a API
-            var response = await Http.PostAsJsonAsync("api/auth/login", _loginModel);
+		try
+		{
+			// 1. Chama a API
+			var response = await Http.PostAsJsonAsync("api/auth/login", _loginModel);
 
-            if (response.IsSuccessStatusCode)
-            {
-                // 2. Lê a resposta (Token)
-                var result = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
-                
-                if (result != null && !string.IsNullOrEmpty(result.Token))
-                {
-                    // 3. Atualiza o Estado de Autenticação (Chama o CustomProvider)
-                    // É necessário fazer o cast para o nosso tipo personalizado
-                    if (AuthStateProvider is IAuthService authService)
-                    {
-                        // Este método deve guardar no SecureStorage e notificar a app
-                        await authService.Login(result.Token);
-                        
-                        // 4. Redireciona para a Home
-                        NavManager.NavigateTo("/");
-                    }
-                    else 
-                    {
-                        _errorMessage = "Erro interno: Provider de autenticação incorreto.";
-                    }
-                }
-            }
-            else
-            {
-                // Erro vindo da API (ex: 401 Unauthorized)
-                _errorMessage = "Email ou Password incorretos.";
-            }
-        }
-        catch (Exception ex)
-        {
-            _errorMessage = $"Erro de conexão: {ex.Message}";
-        }
-        finally
-        {
-            _isLoading = false;
-        }
-    }
+			if (response.IsSuccessStatusCode)
+			{
+				// 2. Lê a resposta (Token)
+				var result = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
+
+				if (result != null && !string.IsNullOrEmpty(result.Token))
+				{
+					// 3. Atualiza o Estado de Autenticação (Chama o CustomProvider)
+					// É necessário fazer o cast para o nosso tipo personalizado
+					if (AuthStateProvider is IAuthService authService)
+					{
+						// Este método deve guardar no SecureStorage e notificar a app
+						await authService.Login(result.Token);
+
+						// 4. Redireciona para a Home
+						NavManager.NavigateTo("/");
+					}
+					else
+					{
+						_errorMessage = "Erro interno: Provider de autenticação incorreto.";
+					}
+				}
+			}
+			else
+			{
+				// Erro vindo da API (ex: 401 Unauthorized)
+				_errorMessage = "Email ou Password incorretos.";
+			}
+		}
+		catch (Exception ex)
+		{
+			_errorMessage = $"Erro de conexão: {ex.Message}";
+		}
+		finally
+		{
+			_isLoading = false;
+		}
+	}
 }
