@@ -12,7 +12,7 @@ using MyCOLL.Data.Data;
 namespace MyCOLL.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260105160007_InitialCreate")]
+    [Migration("20260105163816_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

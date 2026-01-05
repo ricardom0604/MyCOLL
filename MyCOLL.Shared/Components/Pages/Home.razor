@@ -7,6 +7,11 @@
 <PageTitle>Home - MyCOLL</PageTitle>
 
 <style>
+	html,
+	body {
+		overflow-x: hidden;
+	}
+
 	.cat-box {
 		background: linear-gradient(135deg, var(--cor-topo, #00c2e0), #0090a8);
 		aspect-ratio: 1/1;
@@ -18,6 +23,25 @@
 		transition: transform 0.3s ease, box-shadow 0.3s ease;
 		text-align: center;
 		padding: 10px;
+		background-size: cover;
+		background-position: center;
+		position: relative;
+	}
+
+	.cat-box::before {
+		content: "";
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		border-radius: 15px;
+		background: linear-gradient(180deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.45));
+	}
+
+	.cat-box-content {
+		position: relative;
+		z-index: 1;
 	}
 
 	.cat-box:hover {
@@ -29,6 +53,59 @@
 	.cat-link {
 		text-decoration: none;
 		color: white;
+	}
+
+	.h-scroll {
+		overflow-x: auto;
+		overflow-y: hidden;
+		width: 100%;
+		padding-bottom: 10px;
+		scrollbar-width: thin;
+		scrollbar-color: #888 #f1f1f1;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	.h-scroll::-webkit-scrollbar {
+		height: 10px;
+	}
+
+	.h-scroll::-webkit-scrollbar-track {
+		background: #f1f1f1;
+		border-radius: 10px;
+	}
+
+	.h-scroll::-webkit-scrollbar-thumb {
+		background: #888;
+		border-radius: 10px;
+	}
+
+	.h-scroll::-webkit-scrollbar-thumb:hover {
+		background: #555;
+	}
+
+	.h-list {
+		display: flex;
+		flex-wrap: nowrap;
+		gap: 1rem;
+		width: max-content;
+	}
+
+	.h-list.categories {
+		/* overflow only when items exceed viewport */
+	}
+
+	.h-list.products {
+		/* overflow only when items exceed viewport */
+	}
+
+	.cat-item {
+		width: 150px;
+		min-width: 150px;
+	}
+
+	.product-item {
+		width: 240px;
+		min-width: 240px;
 	}
 </style>
 
@@ -44,19 +121,26 @@
 	}
 	else
 	{
-		<div class="row g-3">
-			@foreach (var cat in _categories)
-			{
-				<div class="col-6 col-md-3 col-lg-2">
-					<a href="/category/@cat.Id" class="cat-link">
-						<div class="cat-box shadow-sm">
-							<div>
-								<h5 class="fw-bold m-0">@cat.Name</h5>
+		<div class="h-scroll">
+			<div class="h-list categories">
+				@foreach (var cat in _categories)
+				{
+					var bg = GetCategoryImageUrl(cat.Id);
+					var style = string.IsNullOrEmpty(bg)
+					? string.Empty
+					: $"background-image: url('{bg}');";
+
+					<div class="cat-item">
+						<a href="/category/@cat.Id" class="cat-link">
+							<div class="cat-box shadow-sm" style="@style">
+								<div class="cat-box-content">
+									<strong>@cat.Name</strong>
+								</div>
 							</div>
-						</div>
-					</a>
-				</div>
-			}
+						</a>
+					</div>
+				}
+			</div>
 		</div>
 	}
 </div>
@@ -71,65 +155,67 @@
 }
 else
 {
-	<div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
-		@foreach (var p in _products)
-		{
-			<div class="col">
-				<div class="card-produto h-100 shadow-sm p-3" style="background: white; border-radius: 15px;">
-					<div class="img-container" style="height: 200px; overflow: hidden; background-color: #f8f9fa;">
-						@if (p.Images.Any())
-						{
-							var imgPath = p.Images.First().ImageUrl;
-							string fullUrl;
-							if (imgPath.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+	<div class="h-scroll">
+		<div class="h-list products">
+			@foreach (var p in _products)
+			{
+				<div class="product-item">
+					<div class="card-produto h-100 shadow-sm p-3" style="background: white; border-radius: 15px;">
+						<div class="img-container" style="height: 200px; overflow: hidden; background-color: #f8f9fa;">
+							@if (p.Images.Any())
 							{
-								fullUrl = imgPath;
+								var imgPath = p.Images.First().ImageUrl;
+								string fullUrl;
+								if (imgPath.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+								{
+									fullUrl = imgPath;
+								}
+								else
+								{
+									fullUrl = $"{Http.BaseAddress}{imgPath.TrimStart('/')}";
+								}
+								<img src="@fullUrl" class="card-img-top h-100 w-100" style="object-fit: contain; padding: 10px;"
+									alt="@p.Name" />
 							}
 							else
 							{
-								fullUrl = $"{Http.BaseAddress}{imgPath.TrimStart('/')}";
+								<div class="d-flex align-items-center justify-content-center h-100 text-muted">
+									<i class="bi bi-image fs-1"></i>
+								</div>
 							}
-							<img src="@fullUrl" class="card-img-top h-100 w-100" style="object-fit: contain; padding: 10px;"
-								alt="@p.Name" />
-						}
-						else
-						{
-							<div class="d-flex align-items-center justify-content-center h-100 text-muted">
-								<i class="bi bi-image fs-1"></i>
-							</div>
-						}
-					</div>
-					<div class="mt-3 text-center">
-						<h5 class="fw-bold mb-1 text-truncate">@p.Name</h5>
-						<p class="text-muted small mb-2">@p.CategoryName</p>
-						<h4 class="text-info fw-bold" style="color: var(--cor-topo, #00bcd4) !important;">
-							@p.FinalPrice.ToString("0.00") €
-						</h4>
-						@if (p.Stock > 0)
-						{
-							// Só Clients e users anonimos podem ver o botão de adicionar ao carrinho e demais
-							<AuthorizeView Roles="Client">
-								<Authorized>
-									<button class="btn btn-outline-warning w-100 rounded-pill mt-2 fw-bold"
-										style="color: black; border-color: darkred;" @onclick="() => AddItemToCart(p)">
-										+ Add
-									</button>
-								</Authorized>
-								<NotAuthorized>
-									<a href="/auth/login" class="btn btn-outline-primary">
-										Become a Client to Buy
-									</a>
-								</NotAuthorized>
-							</AuthorizeView>
-						}
-						else
-						{
-							<span class="badge bg-danger mb-2">Out of Stock</span>
-						}
+						</div>
+						<div class="mt-3 text-center">
+							<h5 class="fw-bold mb-1 text-truncate">@p.Name</h5>
+							<p class="text-muted small mb-2">@p.CategoryName</p>
+							<h4 class="text-info fw-bold" style="color: var(--cor-topo, #00bcd4) !important;">
+								@p.FinalPrice.ToString("0.00") €
+							</h4>
+							@if (p.Stock > 0)
+							{
+								// Só Clients e users anonimos podem ver o botão de adicionar ao carrinho e demais
+								<AuthorizeView Roles="Client">
+									<Authorized>
+										<button class="btn btn-outline-warning w-100 rounded-pill mt-2 fw-bold"
+											style="color: black; border-color: darkred;" @onclick="() => AddItemToCart(p)">
+											+ Add
+										</button>
+									</Authorized>
+									<NotAuthorized>
+										<a href="/auth/login" class="btn btn-outline-primary">
+											Become a Client to Buy
+										</a>
+									</NotAuthorized>
+								</AuthorizeView>
+							}
+							else
+							{
+								<span class="badge bg-danger mb-2">Out of Stock</span>
+							}
+						</div>
 					</div>
 				</div>
-			</div>
-		}
+			}
+		</div>
 	</div>
 }
 
@@ -143,29 +229,62 @@ else
 @code {
 	private List<ProductDto>? _products;
 	private List<CategoryDto>? _categories;
+	private readonly Dictionary<int, string> _categoryImages = new();
 	private string _error = "";
 
 	protected override async Task OnInitializedAsync()
 	{
 		try
 		{
-			// Busca Produtos e Categorias em paralelo
+			// Fetch products and categories in parallel
 			var taskProdutos = Http.GetFromJsonAsync<List<ProductDto>>("api/Product");
 			var taskCategorias = Http.GetFromJsonAsync<List<CategoryDto>>("api/Category");
 
 			await Task.WhenAll(taskProdutos, taskCategorias);
 
 			_products = await taskProdutos;
-			// Apanha só as primeiras 8 categorias para não encher o ecrã
-			_categories = (await taskCategorias)?.Take(8).ToList();
+			_categories = await taskCategorias;
+
+			MapCategoryImages();
 		}
 		catch (Exception ex)
 		{
 			Console.WriteLine($"ERROR IN HOME: {ex.Message}");
 			_error = $"Unable to load the store. (Error: {ex.Message})";
 		}
-
 	}
+
+	private void MapCategoryImages()
+	{
+		_categoryImages.Clear();
+
+		if (_categories == null || _products == null)
+		{
+			return;
+		}
+
+		foreach (var category in _categories)
+		{
+			var productWithImage = _products
+			.FirstOrDefault(p => p.CategoryId == category.Id && p.Images?.Any() == true);
+
+			if (productWithImage?.Images?.Any() == true)
+			{
+				var imgPath = productWithImage.Images.First().ImageUrl;
+				string fullUrl = imgPath.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+				? imgPath
+				: $"{Http.BaseAddress}{imgPath.TrimStart('/')}";
+
+				_categoryImages[category.Id] = fullUrl;
+			}
+		}
+	}
+
+	private string GetCategoryImageUrl(int categoryId)
+	{
+		return _categoryImages.TryGetValue(categoryId, out var url) ? url : string.Empty;
+	}
+
 	private void AddItemToCart(ProductDto produto)
 	{
 		// Chama serviço para guardar o produto
