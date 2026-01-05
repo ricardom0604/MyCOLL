@@ -1,0 +1,186 @@
+@page "/products"
+
+@using Microsoft.EntityFrameworkCore
+@using MyCOLL.Data.Models.Entities
+@using MyCOLL.Data.Data
+
+@inject IJSRuntime JsRuntime
+@inject NavigationManager NavManager
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+
+<PageTitle>Lista de Produtos</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Lista de Produtos</h3>
+    <a href="/products/create" class="btn btn-success">
+        <i class="bi bi-plus-lg"></i> Novo Produto
+    </a>
+</div>
+
+<div class="card p-3 mb-4 bg-light shadow-sm">
+    <div class="row g-2">
+        <div class="col-md-4">
+            <input type="text" class="form-control" placeholder="Pesquisar nome..." 
+                   @bind="_searchText" @bind:event="oninput" @onkeyup="LoadProducts" />
+        </div>
+
+        <div class="col-md-3">
+            <select class="form-select" @bind="_selectedCategoryId">
+                <option value="0">Todas as Categorias</option>
+                @foreach (var cat in _categories)
+                {
+                    <option value="@cat.Id">@cat.Name</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <select class="form-select" @bind="_sortOption">
+                <option value="name_asc">Nome (A-Z)</option>
+                <option value="price_asc">Preço (Menor primeiro)</option>
+                <option value="price_desc">Preço (Maior primeiro)</option>
+                <option value="stock_asc">Stock (Baixo)</option>
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <button class="btn btn-primary w-100" @onclick="LoadProducts">
+                Filtrar
+            </button>
+        </div>
+    </div>
+</div>
+
+@if (_productsList == null)
+{
+    <p><em>Carregando produtos...</em></p>
+}
+else if (_productsList.Count == 0)
+{
+    <p><em>Nenhum produto encontrado.</em></p>
+}
+else
+{
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Imagem</th>
+                <th>Nome</th>
+                <th>Categoria</th>
+                <th>Preço Base</th>
+                <th>Taxa (%)</th>
+                <th>Preço Final</th>
+                <th>Stock</th>
+                <th>Estado</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var product in _productsList)
+            {
+                <tr>
+                    <td>
+                        @if (product.Images.Any())
+                        {
+                            <img src="@product.Images.First().ImageUrl" width="50" height="50" style="object-fit:cover" class="rounded"  alt=""/>
+                        }
+                        else
+                        { <span class="text-muted small">Sem img</span> }
+                    </td>
+                    <td>@product.Name</td>
+                    <td>@product.Category?.Name</td>
+                    <td>@product.BasePrice.ToString("C")</td>
+                    <td>@product.SellTax %</td>
+                    <td>@product.FinalPrice.ToString("C")</td>
+                    <td>
+                        @if (product.Stock == 0)
+                        { <span class="text-danger fw-bold">Esgotado</span> }
+                        else if (product.Stock < 5)
+                        { <span class="text-danger fw-bold">@product.Stock (Baixo)</span> }
+                        else
+                        { <span>@product.Stock</span> }
+                    </td>
+                    <td>
+                        @if (product.IsActive)
+                        { <span class="badge bg-success">Ativo</span> }
+                        else
+                        { <span class="badge bg-warning text-dark">Pendente/Inativo</span> }
+                    </td>
+                    <td>
+                        <a href="/products/edit/@product.Id" class="btn btn-sm btn-primary">Editar</a>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteProduct(product)">Apagar</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Product>? _productsList;
+    private ICollection<Category> _categories = new List<Category>();
+    
+    private string _searchText = string.Empty;
+    private int _selectedCategoryId = 0;
+    private string _sortOption = "name_asc";
+    
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        _categories = await context.Categories.OrderBy(c => c.Name).ToListAsync();
+        await LoadProducts();
+    }
+    
+    private async Task LoadProducts()
+    {
+        await using var context = DbFactory.CreateDbContext();
+
+        var query = context.Products
+            .Include(p => p.Category)
+            .Include(p => p.Supplier)
+            .Include(p => p.Images)
+            .AsQueryable();
+
+        // 1. Filtrar por Nome
+        if (!string.IsNullOrWhiteSpace(_searchText))
+        {
+            query = query.Where(p => p.Name.Contains(_searchText));
+        }
+        
+        // 2. Filtrar por Categoria
+        if (_selectedCategoryId > 0)
+        {
+            query = query.Where(p => p.CategoryId == _selectedCategoryId);
+        }
+
+        // 3. Ordenação
+        query = _sortOption switch
+        {
+            "price_asc" => query.OrderBy(p => p.BasePrice),
+            "price_desc" => query.OrderByDescending(p => p.BasePrice),
+            "stock_asc" => query.OrderBy(p => p.Stock),
+            _ => query.OrderBy(p => p.Name) // Default A-Z
+        };
+
+        _productsList = await query.ToListAsync();
+    }
+    
+    // delete
+    private async Task DeleteProduct(Product product)
+    {
+        if (!await JsRuntime.InvokeAsync<bool>("confirm", $"Tem a certeza que deseja apagar '{product.Name}'?"))
+            return;
+        
+        if(product.OrderItems != null && product.OrderItems.Any())
+        {
+            await JsRuntime.InvokeVoidAsync("alert", "Não é possível apagar: Este produto está associado a encomendas.");
+            return;
+        }
+
+        await using var context = DbFactory.CreateDbContext();
+        context.Products.Remove(product);
+        await context.SaveChangesAsync();
+        await LoadProducts();
+    }
+
+}

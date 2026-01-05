@@ -1,0 +1,187 @@
+@page "/orders/manage/{Id:int}"
+
+@using Microsoft.EntityFrameworkCore
+
+@using MyCOLL.Data.Data
+@using MyCOLL.Data.Models.Entities
+@using MyCOLL.Shared.Constants
+
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject ApplicationDbContext DbContext;
+@inject NavigationManager NavManager
+@inject IJSRuntime JsRuntime
+
+<h3>Detalhes da Encomenda #@Id</h3>
+
+@if(_order == null)
+{
+   <p>A carregar...</p> 
+}
+else
+{
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <div class="d-flex justify-content-between">
+                <span><strong>Data:</strong> @_order.OrderDate</span>
+                <span><strong>Estado Atual:</strong> <span class="badge bg-secondary">@_order.Status</span></span>
+            </div>
+        </div>
+        <div class="card-body">
+            <h5>Cliente</h5>
+            <p>
+                Nome: @_order.Client?.FullName <br />
+                Email: @_order.Client?.Email <br />
+                NIF: @_order.Client?.Nif <br />
+                Morada: @_order.Client?.Address
+            </p>
+
+            <h5>Itens da Encomenda</h5>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Preço Unit.</th>
+                        <th>Quantidade</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in _order.Items)
+                    {
+                        <tr>
+                            <td>@item.Product?.Name</td>
+                            <td>@item.UnitPrice.ToString("C")</td>
+                            <td>@item.Quantity</td>
+                            <td>@((item.UnitPrice * item.Quantity).ToString("C"))</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr class="table-active">
+                        <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                        <td><strong>@_order.TotalAmount.ToString("C")</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <div class="card-footer">
+            <div class="d-flex gap-2">
+                <button class="btn btn-secondary" @onclick="GoBack">Voltar</button>
+
+                @if (_order.Status == OrderStatus.Pending)
+                {
+                    <button class="btn btn-success" @onclick="ConfirmPayment">Confirmar Pagamento</button>
+                    <button class="btn btn-danger" @onclick="RejectOrder">Rejeitar Encomenda</button>
+                }
+                
+                @if (_order.Status == OrderStatus.Paid)
+                {
+                    <button class="btn btn-primary" @onclick="ShipOrder">Expedir (Enviar)</button>
+                }
+                
+                @if (_order.Status != OrderStatus.Cancelled && _order.Status != OrderStatus.Delivered)
+                {
+                     <button class="btn btn-outline-danger ms-auto" @onclick="RejectOrder">Cancelar Forçosamente</button>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    public int Id { get; set; }
+    private Order? _order;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrder();
+    }
+
+    private async Task LoadOrder()
+    {
+        await using var context = DbFactory.CreateDbContext();
+        _order = await context.Orders
+            .Include(o => o.Client)
+            .Include(o => o.Items)
+            .ThenInclude(i => i.Product)
+            .FirstOrDefaultAsync(o => o.Id == Id);
+        
+        if(_order == null) 
+            NavManager.NavigateTo("/orders");
+    }
+    private async Task ConfirmPayment()
+    {
+        await using var context = DbFactory.CreateDbContext();
+
+        var orderToUpdate = await context.Orders.FindAsync(Id);
+        
+        if (orderToUpdate != null)
+        {
+            orderToUpdate.Status = OrderStatus.Paid;
+            await DbContext.SaveChangesAsync();
+            await LoadOrder(); // Atualiza UI
+        }
+    }
+
+    private async Task ShipOrder()
+    {
+        await using var context = DbFactory.CreateDbContext();
+
+        var orderToShip = await context.Orders
+            .Include(o => o.Items)
+            .ThenInclude(i => i.Product)
+            .FirstOrDefaultAsync(o => o.Id == Id);
+
+        if (orderToShip == null) return;
+
+        foreach (var item in orderToShip.Items)
+        {
+            if (item.Product.Stock < item.Quantity)
+            {
+                await JsRuntime.InvokeVoidAsync("alert", $"Erro: Stock insuficiente para o produto '{item.Product.Name}'.");
+                return;
+            }
+        }
+
+        foreach (var item in orderToShip.Items)
+        {
+            item.Product.Stock -= item.Quantity;
+        }
+
+        orderToShip.Status = OrderStatus.Shipped;
+        
+        await context.SaveChangesAsync();
+        await LoadOrder();
+        await JsRuntime.InvokeVoidAsync("alert", "Encomenda expedida e stocks atualizados!");
+    }
+
+    private async Task RejectOrder()
+    {
+        if (!await JsRuntime.InvokeAsync<bool>("confirm", "Tem a certeza que deseja cancelar esta encomenda?"))
+            return;
+
+        await using var context = DbFactory.CreateDbContext();
+
+        var orderToCancel = await context.Orders
+             .Include(o => o.Items)
+             .ThenInclude(i => i.Product)
+             .FirstOrDefaultAsync(o => o.Id == Id);
+
+        if (orderToCancel != null)
+        {
+            if (orderToCancel.Status == OrderStatus.Shipped)
+            {
+                foreach (var item in orderToCancel.Items)
+                {
+                    item.Product.Stock += item.Quantity;
+                }
+            }
+
+            orderToCancel.Status = OrderStatus.Cancelled;
+            await context.SaveChangesAsync();
+            await LoadOrder();
+        }
+    }
+
+    private void GoBack() => NavManager.NavigateTo("/orders");
+}
