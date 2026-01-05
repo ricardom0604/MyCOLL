@@ -3,79 +3,79 @@
 @inject NavigationManager NavigationManager
 
 
-<div class="top-row ps-3 navbar navbar-dark">
+<nav class="navbar navbar-dark">
 	<div class="container-fluid">
-		<a class="navbar-brand" href="">Shop Management</a>
-	</div>
-</div>
+		<a class="navbar-brand" href="/">Shop Management</a>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+		<input type="checkbox" title="Navigation menu" class="navbar-toggler" id="navbar-toggle" />
+		<label class="navbar-toggle-label" for="navbar-toggle"></label>
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-	<nav class="flex-column">
-		<div class="nav-item px-3">
-			<NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-				<span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-			</NavLink>
+		<div class="nav-menu">
+			<div class="nav-item px-3">
+				<NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
+					<span class="bi bi-house-hollow-nav-menu" aria-hidden="true"></span> Home
+				</NavLink>
+			</div>
+
+			<AuthorizeView>
+				<Authorized>
+					<div class="nav-item px-3">
+						<NavLink class="nav-link" href="/products">
+							<span class="bi bi-box-stacked-hollow-nav-menu" aria-hidden="true"></span> Products
+						</NavLink>
+					</div>
+
+					<div class="nav-item px-3">
+						<NavLink class="nav-link" href="/categories">
+							<span class="bi bi-bookmark-hollow-nav-menu" aria-hidden="true"></span> Categories
+						</NavLink>
+					</div>
+
+					<div class="nav-item px-3">
+						<NavLink class="nav-link" href="/orders">
+							<span class="bi bi-clipboard-check-hollow-nav-menu" aria-hidden="true"></span> Orders
+						</NavLink>
+					</div>
+
+					<div class="nav-item px-3">
+						<NavLink class="nav-link" href="/users">
+							<span class="bi bi-people-nav-menu" aria-hidden="true"></span> Users
+						</NavLink>
+					</div>
+
+					<div class="nav-item px-3">
+						<NavLink class="nav-link" href="/Account/Manage">
+							<span class="bi bi-person-hollow-nav-menu" aria-hidden="true"></span>
+							@context.User.Identity?.Name
+						</NavLink>
+					</div>
+
+					<div class="nav-item px-3">
+						<form action="/Account/Logout" method="post">
+							<AntiforgeryToken />
+							<input type="hidden" name="ReturnUrl" value="@_currentUrl" />
+							<button type="submit" class="nav-link">
+								<span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
+							</button>
+						</form>
+					</div>
+				</Authorized>
+				<NotAuthorized>
+					<div class="nav-item px-3">
+						<NavLink class="nav-link" href="/Account/Register">
+							<span class="bi bi-person-nav-menu" aria-hidden="true"></span> Register
+						</NavLink>
+					</div>
+					<div class="nav-item px-3">
+						<NavLink class="nav-link" href="/Account/Login">
+							<span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Login
+						</NavLink>
+					</div>
+				</NotAuthorized>
+			</AuthorizeView>
 		</div>
-
-		<AuthorizeView>
-			<Authorized>
-				<div class="nav-item px-3">
-					<NavLink class="nav-link" href="products">
-						<span class="bi bi-box" aria-hidden="true"></span> Products
-					</NavLink>
-				</div>
-
-				<div class="nav-item px-3">
-					<NavLink class="nav-link" href="categories">
-						<span class="bi bi-box" aria-hidden="true"></span> Categories
-					</NavLink>
-				</div>
-
-				<div class="nav-item px-3">
-					<NavLink class="nav-link" href="orders">
-						<span class="bi bi-box" aria-hidden="true"></span> Orders
-					</NavLink>
-				</div>
-
-				<div class="nav-item px-3">
-					<NavLink class="nav-link" href="users">
-						<span class="bi bi-box" aria-hidden="true"></span> Users
-					</NavLink>
-				</div>
-
-				<div class="nav-item px-3">
-					<NavLink class="nav-link" href="Account/Manage">
-						<span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @context.User.Identity?.Name
-					</NavLink>
-				</div>
-
-				<div class="nav-item px-3">
-					<form action="Account/Logout" method="post">
-						<AntiforgeryToken />
-						<input type="hidden" name="ReturnUrl" value="@_currentUrl" />
-						<button type="submit" class="nav-link">
-							<span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
-						</button>
-					</form>
-				</div>
-			</Authorized>
-			<NotAuthorized>
-				<div class="nav-item px-3">
-					<NavLink class="nav-link" href="Account/Register">
-						<span class="bi bi-person-nav-menu" aria-hidden="true"></span> Register
-					</NavLink>
-				</div>
-				<div class="nav-item px-3">
-					<NavLink class="nav-link" href="Account/Login">
-						<span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Login
-					</NavLink>
-				</div>
-			</NotAuthorized>
-		</AuthorizeView>
-	</nav>
-</div>
+	</div>
+</nav>
 
 @code {
 	private string? _currentUrl;
